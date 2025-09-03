@@ -471,12 +471,7 @@
         }
 
         function logout() {
-            auth.signOut().then(() => {
-                console.log('User signed out successfully');
-            }).catch((error) => {
-                console.error('Error signing out:', error);
-                showError('Error signing out: ' + error.message);
-            });
+            auth.signOut(); // Force sign out for testing
         }
 
         // Wait for Firebase Auth to initialize before hiding loading screen
