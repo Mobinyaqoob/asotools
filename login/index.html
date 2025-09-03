@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -114,8 +115,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    document.addEventListener("DOMContentLoaded", function() {
-      document.getElementById("loginBtn").addEventListener("click", function() {
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("loginBtn").addEventListener("click", function () {
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
         const errorElement = document.getElementById("error");
@@ -140,7 +141,14 @@
 
         signInWithEmailAndPassword(auth, email, password)
           .then(() => {
-            window.location.href = "../image-optimize/";
+            // Check if there's a redirect URL in the URL parameters or session storage
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectTo = urlParams.get('redirect') || sessionStorage.getItem('redirectAfterLogin') || '../';
+
+            // Clear the stored redirect
+            sessionStorage.removeItem('redirectAfterLogin');
+
+            window.location.href = redirectTo;
           })
           .catch(error => {
             // Handle specific Firebase auth errors
@@ -174,21 +182,23 @@
     });
   </script>
 </head>
+
 <body>
   <div class="login-container">
     <h1 class="login-title">🔑 Welcome Back</h1>
-    
+
     <div class="input-group">
       <input type="email" id="email" class="input-field" placeholder="Enter your email" required>
     </div>
-    
+
     <div class="input-group">
       <input type="password" id="password" class="input-field" placeholder="Enter your password" required>
     </div>
-    
+
     <button id="loginBtn" class="login-btn">Sign In</button>
-    
+
     <div id="error" class="error-message"></div>
   </div>
 </body>
+
 </html>

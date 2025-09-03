@@ -747,6 +747,8 @@
 
         // Redirect to login page after a short delay
         setTimeout(() => {
+          // Store current location for redirect after login
+          sessionStorage.setItem('redirectAfterLogin', '../image-optimize/');
           window.location.href = "../login/";
         }, 1000);
       }
