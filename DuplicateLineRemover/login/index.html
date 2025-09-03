@@ -3,19 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>Login</title>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-</head>
-<body style="font-family: Arial, sans-serif; text-align:center; margin-top:100px;">
-  <h1>🔑 Login</h1>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  <input type="email" id="email" placeholder="Email" style="padding:10px; margin:5px;"><br>
-  <input type="password" id="password" placeholder="Password" style="padding:10px; margin:5px;"><br>
-  <button onclick="login()" style="padding:10px 20px; margin-top:10px;">Login</button>
-
-  <p id="error" style="color:red;"></p>
-
-  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
       authDomain: "asotools-auth.firebaseapp.com",
@@ -26,21 +17,30 @@
       measurementId: "G-TC77Q0EMBJ"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-    function login() {
+    window.login = function() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
-      auth.signInWithEmailAndPassword(email, password)
+      signInWithEmailAndPassword(auth, email, password)
         .then(() => {
-          window.location.href = "../"; // go to main tool page
+          window.location.href = "../";
         })
         .catch(error => {
           document.getElementById("error").innerText = error.message;
         });
     }
   </script>
+</head>
+<body style="font-family: Arial, sans-serif; text-align:center; margin-top:100px;">
+  <h1>🔑 Login</h1>
+
+  <input type="email" id="email" placeholder="Email" style="padding:10px; margin:5px;"><br>
+  <input type="password" id="password" placeholder="Password" style="padding:10px; margin:5px;"><br>
+  <button onclick="login()" style="padding:10px 20px; margin-top:10px;">Login</button>
+
+  <p id="error" style="color:red;"></p>
 </body>
 </html>
