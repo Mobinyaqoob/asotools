@@ -1,29 +1,3 @@
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-<script>
-// Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
-    authDomain: "asotools-auth.firebaseapp.com",
-    projectId: "asotools-auth",
-    storageBucket: "asotools-auth.firebasestorage.app",
-    messagingSenderId: "673087191334",
-    appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
-    measurementId: "G-TC77Q0EMBJ"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  // 🔹 Redirect if not logged in
-  auth.onAuthStateChanged((user) => {
-    if (!user) {
-      window.location.href = "../login.html"; // go back to login
-    }
-  });
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -363,6 +337,31 @@
     </style>
 </head>
 <body>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+<script>
+// Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
+    authDomain: "asotools-auth.firebaseapp.com",
+    projectId: "asotools-auth",
+    storageBucket: "asotools-auth.firebasestorage.app",
+    messagingSenderId: "673087191334",
+    appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
+    measurementId: "G-TC77Q0EMBJ"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  // 🔹 Redirect if not logged in
+  auth.onAuthStateChanged((user) => {
+    if (!user) {
+      window.location.href = "../login.html"; // go back to login
+    }
+  });
+</script>
     <div class="container">
         <div class="header">
             <h1>🧹 CSV Duplicate Remover</h1>
