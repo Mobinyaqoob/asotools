@@ -22,15 +22,55 @@
 
     document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("loginBtn").addEventListener("click", function() {
-        const email = document.getElementById("email").value;
+        const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
+        const errorElement = document.getElementById("error");
+
+        // Clear previous error
+        errorElement.innerText = "";
+
+        // Validate empty fields
+        if (!email || !password) {
+          errorElement.innerText = "Please fill in both email and password fields.";
+          return;
+        }
+
+        // Validate email format
+        if (!email.includes("@")) {
+          errorElement.innerText = "Please enter a valid email address.";
+          return;
+        }
 
         signInWithEmailAndPassword(auth, email, password)
           .then(() => {
             window.location.href = "../";
           })
           .catch(error => {
-            document.getElementById("error").innerText = error.message;
+            // Handle specific Firebase auth errors
+            let errorMessage = "";
+            switch (error.code) {
+              case "auth/invalid-email":
+                errorMessage = "Invalid email address format.";
+                break;
+              case "auth/user-disabled":
+                errorMessage = "This account has been disabled.";
+                break;
+              case "auth/user-not-found":
+                errorMessage = "No account found with this email address.";
+                break;
+              case "auth/wrong-password":
+                errorMessage = "Incorrect password. Please try again.";
+                break;
+              case "auth/invalid-credential":
+                errorMessage = "Invalid email or password. Please check your credentials.";
+                break;
+              case "auth/too-many-requests":
+                errorMessage = "Too many failed attempts. Please try again later.";
+                break;
+              default:
+                errorMessage = "Login failed. Please check your credentials and try again.";
+            }
+            errorElement.innerText = errorMessage;
           });
       });
     });
