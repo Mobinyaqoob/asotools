@@ -1,3 +1,24 @@
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT",
+    appId: "YOUR_APP_ID"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  // 🔹 Redirect if not logged in
+  auth.onAuthStateChanged((user) => {
+    if (!user) {
+      window.location.href = "../login.html"; // go back to login
+    }
+  });
+</script>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
