@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,100 +97,98 @@
       display: block;
     }
   </style>
-  <script type="module"></script>
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  const firebaseConfig = {
-  apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
-  authDomain: "asotools-auth.firebaseapp.com",
-  projectId: "asotools-auth",
-  storageBucket: "asotools-auth.firebasestorage.app",
-  messagingSenderId: "673087191334",
-  appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
-  measurementId: "G-TC77Q0EMBJ"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
+      authDomain: "asotools-auth.firebaseapp.com",
+      projectId: "asotools-auth",
+      storageBucket: "asotools-auth.firebasestorage.app",
+      messagingSenderId: "673087191334",
+      appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
+      measurementId: "G-TC77Q0EMBJ"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-  document.addEventListener("DOMContentLoaded", function() {
-  document.getElementById("loginBtn").addEventListener("click", function() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  const errorElement = document.getElementById("error");
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById("loginBtn").addEventListener("click", function() {
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const errorElement = document.getElementById("error");
 
-  // Clear previous error
-  errorElement.innerText = "";
-  errorElement.classList.remove("show");
+        // Clear previous error
+        errorElement.innerText = "";
+        errorElement.classList.remove("show");
 
-  // Validate empty fields
-  if (!email || !password) {
-  errorElement.innerText = "Please fill in both email and password fields.";
-  errorElement.classList.add("show");
-  return;
-  }
+        // Validate empty fields
+        if (!email || !password) {
+          errorElement.innerText = "Please fill in both email and password fields.";
+          errorElement.classList.add("show");
+          return;
+        }
 
-  // Validate email format
-  if (!email.includes("@")) {
-  errorElement.innerText = "Please enter a valid email address.";
-  errorElement.classList.add("show");
-  return;
-  }
+        // Validate email format
+        if (!email.includes("@")) {
+          errorElement.innerText = "Please enter a valid email address.";
+          errorElement.classList.add("show");
+          return;
+        }
 
-  signInWithEmailAndPassword(auth, email, password)
-  .then(() => {
-  window.location.href = "../";
-  })
-  .catch(error => {
-  // Handle specific Firebase auth errors
-  let errorMessage = "";
-  switch (error.code) {
-  case "auth/invalid-email":
-  errorMessage = "Invalid email address format.";
-  break;
-  case "auth/user-disabled":
-  errorMessage = "This account has been disabled.";
-  break;
-  case "auth/user-not-found":
-  errorMessage = "No account found with this email address.";
-  break;
-  case "auth/wrong-password":
-  errorMessage = "Incorrect password. Please try again.";
-  break;
-  case "auth/invalid-credential":
-  errorMessage = "Invalid email or password. Please check your credentials.";
-  break;
-  case "auth/too-many-requests":
-  errorMessage = "Too many failed attempts. Please try again later.";
-  break;
-  default:
-  errorMessage = "Login failed. Please check your credentials and try again.";
-  }
-  errorElement.innerText = errorMessage;
-  errorElement.classList.add("show");
-  });
-  });
-  });
+        signInWithEmailAndPassword(auth, email, password)
+          .then(() => {
+            window.location.href = "../";
+          })
+          .catch(error => {
+            // Handle specific Firebase auth errors
+            let errorMessage = "";
+            switch (error.code) {
+              case "auth/invalid-email":
+                errorMessage = "Invalid email address format.";
+                break;
+              case "auth/user-disabled":
+                errorMessage = "This account has been disabled.";
+                break;
+              case "auth/user-not-found":
+                errorMessage = "No account found with this email address.";
+                break;
+              case "auth/wrong-password":
+                errorMessage = "Incorrect password. Please try again.";
+                break;
+              case "auth/invalid-credential":
+                errorMessage = "Invalid email or password. Please check your credentials.";
+                break;
+              case "auth/too-many-requests":
+                errorMessage = "Too many failed attempts. Please try again later.";
+                break;
+              default:
+                errorMessage = "Login failed. Please check your credentials and try again.";
+            }
+            errorElement.innerText = errorMessage;
+            errorElement.classList.add("show");
+          });
+      });
+    });
   </script>
 </head>
-
 <body>
   <div class="login-container">
     <h1 class="login-title">🔑 Welcome Back</h1>
-
+    
     <div class="input-group">
       <input type="email" id="email" class="input-field" placeholder="Enter your email" required>
     </div>
-
+    
     <div class="input-group">
       <input type="password" id="password" class="input-field" placeholder="Enter your password" required>
     </div>
-
+    
     <button id="loginBtn" class="login-btn">Sign In</button>
-
+    
     <div id="error" class="error-message"></div>
   </div>
 </body>
-
 </html>
