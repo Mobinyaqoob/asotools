@@ -20,18 +20,20 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    window.login = function() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById("loginBtn").addEventListener("click", function() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          window.location.href = "../";
-        })
-        .catch(error => {
-          document.getElementById("error").innerText = error.message;
-        });
-    }
+        signInWithEmailAndPassword(auth, email, password)
+          .then(() => {
+            window.location.href = "../";
+          })
+          .catch(error => {
+            document.getElementById("error").innerText = error.message;
+          });
+      });
+    });
   </script>
 </head>
 <body style="font-family: Arial, sans-serif; text-align:center; margin-top:100px;">
@@ -39,7 +41,7 @@
 
   <input type="email" id="email" placeholder="Email" style="padding:10px; margin:5px;"><br>
   <input type="password" id="password" placeholder="Password" style="padding:10px; margin:5px;"><br>
-  <button onclick="login()" style="padding:10px 20px; margin-top:10px;">Login</button>
+  <button id="loginBtn" style="padding:10px 20px; margin-top:10px;">Login</button>
 
   <p id="error" style="color:red;"></p>
 </body>
