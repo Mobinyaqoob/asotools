@@ -35,7 +35,7 @@
 
       auth.signInWithEmailAndPassword(email, password)
         .then(() => {
-          window.location.href = "index.html"; // go to tool
+          window.location.href = "../"; // go to main tool page
         })
         .catch(error => {
           document.getElementById("error").innerText = error.message;
