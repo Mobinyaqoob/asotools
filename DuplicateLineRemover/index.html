@@ -46,6 +46,61 @@
             opacity: 0.9;
         }
 
+        .auth-info {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-email {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .auth-spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 20px;
+        }
+
         .upload-section {
             padding: 40px;
             background: #f8f9fa;
@@ -333,120 +388,196 @@
             .controls {
                 justify-content: center;
             }
+            
+            .auth-info {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
 <body>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-<script>
-// Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
-    authDomain: "asotools-auth.firebaseapp.com",
-    projectId: "asotools-auth",
-    storageBucket: "asotools-auth.firebasestorage.app",
-    messagingSenderId: "673087191334",
-    appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
-    measurementId: "G-TC77Q0EMBJ"
-  };
+    <!-- Loading screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="auth-spinner"></div>
+        <div>Checking authentication...</div>
+    </div>
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
-  // 🔹 Redirect if not logged in
-  auth.onAuthStateChanged((user) => {
-    if (!user) {
-      window.location.href = "../login.html"; // go back to login
-    }
-  });
-</script>
-    <div class="container">
-        <div class="header">
-            <h1>🧹 CSV Duplicate Remover</h1>
-            <p>Upload your CSV file and remove duplicate entries instantly</p>
-        </div>
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
+            authDomain: "asotools-auth.firebaseapp.com",
+            projectId: "asotools-auth",
+            storageBucket: "asotools-auth.firebasestorage.app",
+            messagingSenderId: "673087191334",
+            appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
+            measurementId: "G-TC77Q0EMBJ"
+        };
 
-        <div class="upload-section">
-            <div class="upload-area" onclick="document.getElementById('csvFile').click()">
-                <div class="upload-icon">📁</div>
-                <div class="upload-text">Click to upload or drag & drop your CSV file</div>
-                <div class="upload-subtext">Supports CSV files up to 10MB</div>
-                <input type="file" id="csvFile" class="file-input" accept=".csv" />
-            </div>
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        let currentUser = null;
+
+        // Authentication state observer
+        auth.onAuthStateChanged((user) => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContent = document.getElementById('mainContent');
             
-            <div class="controls" style="justify-content: center; margin-top: 20px;">
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" id="caseSensitive" />
-                    <span>Case sensitive matching</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" id="treatTvSame" checked />
-                    <span>Treat "Tv" and "TV" as same</span>
-                </label>
+            if (user) {
+                // User is signed in
+                currentUser = user;
+                console.log('User authenticated:', user.email);
+                
+                // Show main content
+                loadingScreen.style.display = 'none';
+                mainContent.style.display = 'block';
+                
+                // Update user info in header
+                updateUserInfo(user);
+                
+            } else {
+                // User is signed out
+                console.log('User not authenticated, redirecting to login');
+                
+                // Hide main content and show loading
+                mainContent.style.display = 'none';
+                loadingScreen.innerHTML = `
+                    <div class="auth-spinner"></div>
+                    <div>Redirecting to login...</div>
+                `;
+                
+                // Redirect to login page after a short delay
+                setTimeout(() => {
+                    window.location.href = "../login.html";
+                }, 1000);
+            }
+        });
+
+        function updateUserInfo(user) {
+            const userInfo = document.getElementById('userInfo');
+            if (userInfo) {
+                userInfo.innerHTML = `
+                    <span class="user-email">Welcome, ${user.email}</span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                `;
+            }
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                console.log('User signed out successfully');
+            }).catch((error) => {
+                console.error('Error signing out:', error);
+                showError('Error signing out: ' + error.message);
+            });
+        }
+
+        // Wait for Firebase Auth to initialize before hiding loading screen
+        let authInitialized = false;
+        auth.onAuthStateChanged(() => {
+            if (!authInitialized) {
+                authInitialized = true;
+            }
+        });
+    </script>
+
+    <div id="mainContent" style="display: none;">
+        <div class="container">
+            <div class="header">
+                <h1>🧹 CSV Duplicate Remover</h1>
+                <p>Upload your CSV file and remove duplicate entries instantly</p>
+                <div class="auth-info" id="userInfo">
+                    <!-- User info will be populated here -->
+                </div>
             </div>
-        </div>
 
-        <div class="results-section" id="resultsSection">
-            <div class="loading" id="loadingIndicator">
-                <div class="spinner"></div>
-                Processing your CSV file...
+            <div class="upload-section">
+                <div class="upload-area" onclick="document.getElementById('csvFile').click()">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to upload or drag & drop your CSV file</div>
+                    <div class="upload-subtext">Supports CSV files up to 10MB</div>
+                    <input type="file" id="csvFile" class="file-input" accept=".csv" />
+                </div>
+                
+                <div class="controls" style="justify-content: center; margin-top: 20px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="caseSensitive" />
+                        <span>Case sensitive matching</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="treatTvSame" checked />
+                        <span>Treat "Tv" and "TV" as same</span>
+                    </label>
+                </div>
             </div>
 
-            <div id="resultsContent" style="display: none;">
-                <div class="stats-grid" id="statsGrid">
-                    <!-- Stats will be populated here -->
+            <div class="results-section" id="resultsSection">
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    Processing your CSV file...
                 </div>
 
-                <div class="duplicate-analysis" id="duplicateAnalysis" style="display: none;">
-                    <!-- Duplicate analysis will be populated here -->
-                </div>
-
-                <div class="controls">
-                    <button class="btn btn-success" onclick="downloadCleanCSV()">
-                        ⬇️ Download Clean CSV
-                    </button>
-                    <button class="btn btn-info" onclick="downloadDuplicatesCSV()">
-                        📋 Download Duplicates List
-                    </button>
-                    <button class="btn btn-danger" onclick="downloadReport()">
-                        📊 Download Full Report
-                    </button>
-                    <button class="btn reset-btn" onclick="resetApp()">
-                        🔄 Upload New File
-                    </button>
-                </div>
-
-                <div class="section">
-                    <h2 class="section-title">📋 Clean Data (Duplicates Removed)</h2>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr id="cleanTableHeader">
-                                    <!-- Headers will be populated dynamically -->
-                                </tr>
-                            </thead>
-                            <tbody id="cleanTableBody">
-                                <!-- Clean data will be populated here -->
-                            </tbody>
-                        </table>
+                <div id="resultsContent" style="display: none;">
+                    <div class="stats-grid" id="statsGrid">
+                        <!-- Stats will be populated here -->
                     </div>
-                </div>
 
-                <div class="section" id="duplicatesSection" style="display: none;">
-                    <h2 class="section-title">🚫 Removed Duplicates</h2>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr id="duplicatesTableHeader">
-                                    <!-- Headers will be populated dynamically -->
-                                </tr>
-                            </thead>
-                            <tbody id="duplicatesTableBody">
-                                <!-- Duplicates will be populated here -->
-                            </tbody>
-                        </table>
+                    <div class="duplicate-analysis" id="duplicateAnalysis" style="display: none;">
+                        <!-- Duplicate analysis will be populated here -->
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn btn-success" onclick="downloadCleanCSV()">
+                            ⬇️ Download Clean CSV
+                        </button>
+                        <button class="btn btn-info" onclick="downloadDuplicatesCSV()">
+                            📋 Download Duplicates List
+                        </button>
+                        <button class="btn btn-danger" onclick="downloadReport()">
+                            📊 Download Full Report
+                        </button>
+                        <button class="btn reset-btn" onclick="resetApp()">
+                            🔄 Upload New File
+                        </button>
+                    </div>
+
+                    <div class="section">
+                        <h2 class="section-title">📋 Clean Data (Duplicates Removed)</h2>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr id="cleanTableHeader">
+                                        <!-- Headers will be populated dynamically -->
+                                    </tr>
+                                </thead>
+                                <tbody id="cleanTableBody">
+                                    <!-- Clean data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="section" id="duplicatesSection" style="display: none;">
+                        <h2 class="section-title">🚫 Removed Duplicates</h2>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr id="duplicatesTableHeader">
+                                        <!-- Headers will be populated dynamically -->
+                                    </tr>
+                                </thead>
+                                <tbody id="duplicatesTableBody">
+                                    <!-- Duplicates will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -760,6 +891,7 @@
             return `
 CSV DUPLICATE REMOVAL REPORT
 Generated: ${timestamp}
+User: ${currentUser ? currentUser.email : 'Unknown'}
 
 SETTINGS:
 - Case Sensitive: ${caseSensitive ? 'Yes' : 'No'}
