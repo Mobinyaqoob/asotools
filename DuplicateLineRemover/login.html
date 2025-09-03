@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tool 1</title>
+</head>
+<body>
+  <h2>Welcome to Tool 1</h2>
+  <button onclick="logout()">Logout</button>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+  <script>
+    // 🔹 Same Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
+      authDomain: "asotools-auth.firebaseapp.com",
+      projectId: "asotools-auth",
+      storageBucket: "asotools-auth.firebasestorage.app",
+      messagingSenderId: "673087191334",
+      appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
+      measurementId: "G-TC77Q0EMBJ"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // 🔹 Protect the page
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        window.location.href = "../login.html"; // redirect to login if not logged in
+      }
+    });
+
+    // 🔹 Logout function
+    function logout() {
+      auth.signOut().then(() => {
+        alert("Logged out!");
+        window.location.href = "../login.html";
+      });
+    }
+  </script>
+</body>
+</html>
