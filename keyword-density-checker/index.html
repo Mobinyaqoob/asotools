@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyword Density Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .input-section {
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .proceed-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .proceed-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .proceed-btn:active {
+            transform: translateY(0);
+        }
+
+        .results-section {
+            padding: 40px;
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-card h3 {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .keyword-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0;
+            font-size: 1.2em;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .keyword-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .keyword-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 0 0 10px 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .keyword-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e6ed;
+            position: relative;
+            overflow: visible;
+        }
+
+        .keyword-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .keyword-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .keyword-table tr:nth-child(even) {
+            background: #fdfdfd;
+        }
+
+        .frequency {
+            font-weight: 600;
+            color: #4facfe;
+        }
+
+        .percentage {
+            font-weight: 600;
+            color: #ff6b6b;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        .warning-section {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            color: #2d3436;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 15px;
+            border-left: 5px solid #e17055;
+        }
+
+        .warning-section h3 {
+            margin: 0 0 10px 0;
+            color: #2d3436;
+        }
+
+        .warning-section ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .tip-section {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 15px;
+            border-left: 5px solid #0984e3;
+        }
+
+        .tip-section h3 {
+            margin: 0 0 10px 0;
+            color: white;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #4facfe;
+            border-radius: 50%;
+            color: white;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            line-height: 16px;
+            margin-left: 5px;
+            cursor: help;
+            transition: background-color 0.3s ease;
+        }
+
+        .tooltip-icon:hover {
+            background: #667eea;
+        }
+
+        .tooltip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px;
+            width: 280px;
+            font-size: 13px;
+            line-height: 1.4;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .tooltip-left {
+            left: 0;
+            transform: translateX(0);
+        }
+
+        .tooltip-right {
+            left: auto;
+            right: -10px;
+            transform: translateX(0);
+            width: 260px;
+        }
+
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #333;
+        }
+
+        .tooltip-left::after {
+            left: 20px;
+            transform: translateX(0);
+        }
+
+        .tooltip-right::after {
+            left: auto;
+            right: 30px;
+            transform: translateX(0);
+        }
+
+        .tooltip-container:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .input-section, .results-section {
+                padding: 20px;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .keyword-table {
+                font-size: 14px;
+            }
+            
+            .keyword-table th,
+            .keyword-table td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Keyword Density Checker</h1>
+            <p>Analyze your text and discover keyword patterns with precision</p>
+        </div>
+
+        <div class="input-section">
+            <div class="form-group">
+                <label for="textInput">Enter your text to analyze:</label>
+                <textarea id="textInput" placeholder="Paste your text here to analyze keyword density..."></textarea>
+            </div>
+            <button class="proceed-btn" onclick="analyzeText()">Proceed</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing your text...</p>
+        </div>
+
+        <div class="results-section" id="results">
+            <div class="stats" id="stats"></div>
+            
+            <div class="warning-section">
+                <h3>⚠️ Important Notes:</h3>
+                <ul>
+                    <li><strong>Stop Words Filtered:</strong> Common words like "the", "and", "is", "you", "can" are automatically excluded</li>
+                    <li><strong>Minimum Length:</strong> Only words with 2+ characters are considered keywords</li>
+                    <li><strong>Numbers Excluded:</strong> Pure numeric values (like "123") are not counted as keywords</li>
+                    <li><strong>All Words Must Be Keywords:</strong> For multi-word phrases, ALL words must be meaningful (no stop words)</li>
+                </ul>
+            </div>
+            
+            <div class="keyword-section">
+                <div class="section-title">
+                    <span>One Word Keywords</span>
+                    <span class="keyword-count" id="oneWordCount">0 keywords</span>
+                </div>
+                <table class="keyword-table" id="oneWordTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                #
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip tooltip-left">
+                                        Ranking position of the keyword based on frequency
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Keyword
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        The specific word or phrase found in your text
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Frequency
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        How many times this keyword appears in your text
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Percentage
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        What percentage this keyword represents of all possible keywords of this length
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Total
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        Total number of possible keyword positions for this word length in your text
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Density
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip tooltip-right">
+                                        Keyword density as a percentage of total words in your text (SEO metric)
+                                    </div>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="oneWordBody"></tbody>
+                </table>
+            </div>
+
+            <div class="keyword-section">
+                <div class="section-title">
+                    <span>Two Word Keywords</span>
+                    <span class="keyword-count" id="twoWordCount">0 keywords</span>
+                </div>
+                <table class="keyword-table" id="twoWordTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                #
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip tooltip-left">
+                                        Ranking position of the keyword phrase based on frequency
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Keywords
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        Two-word phrases found in your text (both words must be meaningful keywords)
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Frequency
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        How many times this two-word phrase appears in your text
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Percentage
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        What percentage this phrase represents of all possible two-word combinations
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Total
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        Total number of possible two-word phrase positions in your text
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Density
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip tooltip-right">
+                                        Phrase density as a percentage of total words (useful for long-tail SEO)
+                                    </div>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="twoWordBody"></tbody>
+                </table>
+            </div>
+
+            <div class="keyword-section">
+                <div class="section-title">
+                    <span>Three Word Keywords</span>
+                    <span class="keyword-count" id="threeWordCount">0 keywords</span>
+                </div>
+                <table class="keyword-table" id="threeWordTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                #
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip tooltip-left">
+                                        Ranking position of the keyword phrase based on frequency
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Keywords
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        Three-word phrases found in your text (all words must be meaningful keywords)
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Frequency
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        How many times this three-word phrase appears in your text
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Percentage
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        What percentage this phrase represents of all possible three-word combinations
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Total
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        Total number of possible three-word phrase positions in your text
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Density
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip tooltip-right">
+                                        Phrase density as a percentage of total words (for specific keyword targeting)
+                                    </div>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="threeWordBody"></tbody>
+                </table>
+            </div>
+
+            <div class="keyword-section">
+                <div class="section-title">
+                    <span>Four Word Keywords</span>
+                    <span class="keyword-count" id="fourWordCount">0 keywords</span>
+                </div>
+                <table class="keyword-table" id="fourWordTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                #
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip tooltip-left">
+                                        Ranking position of the keyword phrase based on frequency
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Keywords
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        Four-word phrases found in your text (all words must be meaningful keywords)
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Frequency
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        How many times this four-word phrase appears in your text
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Percentage
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        What percentage this phrase represents of all possible four-word combinations
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Total
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip">
+                                        Total number of possible four-word phrase positions in your text
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Density
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">?</span>
+                                    <div class="tooltip tooltip-right">
+                                        Phrase density as a percentage of total words (for very specific long-tail keywords)
+                                    </div>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="fourWordBody"></tbody>
+                </table>
+            </div>
+
+            <div class="tip-section">
+                <h3>💡 SEO Tips:</h3>
+                <ul>
+                    <li><strong>Keyword Density:</strong> Aim for 1-3% density for primary keywords</li>
+                    <li><strong>Long-tail Keywords:</strong> 3-4 word phrases often have less competition</li>
+                    <li><strong>Natural Distribution:</strong> Keywords should appear naturally throughout your content</li>
+                    <li><strong>Avoid Keyword Stuffing:</strong> Over 5% density may be penalized by search engines</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Comprehensive stop words to filter out - only meaningful keywords will remain
+        const stopWords = new Set([
+            // Articles
+            'a', 'an', 'the',
+            
+            // Pronouns
+            'i', 'me', 'my', 'mine', 'myself', 'you', 'your', 'yours', 'yourself', 'yourselves',
+            'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself',
+            'we', 'us', 'our', 'ours', 'ourselves', 'they', 'them', 'their', 'theirs', 'themselves',
+            
+            // Common verbs and auxiliaries
+            'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having',
+            'do', 'does', 'did', 'doing', 'will', 'would', 'could', 'should', 'may', 'might', 'must',
+            'shall', 'can', 'ought', 'get', 'got', 'getting', 'gets', 'go', 'goes', 'went', 'going',
+            'come', 'comes', 'came', 'coming', 'take', 'takes', 'took', 'taken', 'taking', 'make', 'makes',
+            'made', 'making', 'put', 'puts', 'putting', 'see', 'sees', 'saw', 'seen', 'seeing',
+            'give', 'gives', 'gave', 'given', 'giving', 'find', 'finds', 'found', 'finding',
+            'think', 'thinks', 'thought', 'thinking', 'tell', 'tells', 'told', 'telling',
+            'become', 'becomes', 'became', 'becoming', 'leave', 'leaves', 'left', 'leaving',
+            'feel', 'feels', 'felt', 'feeling', 'try', 'tries', 'tried', 'trying',
+            'ask', 'asks', 'asked', 'asking', 'work', 'works', 'worked', 'working',
+            'seem', 'seems', 'seemed', 'seeming', 'turn', 'turns', 'turned', 'turning',
+            'start', 'starts', 'started', 'starting', 'show', 'shows', 'showed', 'showing',
+            'hear', 'hears', 'heard', 'hearing', 'play', 'plays', 'played', 'playing',
+            'run', 'runs', 'ran', 'running', 'move', 'moves', 'moved', 'moving',
+            'live', 'lives', 'lived', 'living', 'believe', 'believes', 'believed', 'believing',
+            'hold', 'holds', 'held', 'holding', 'bring', 'brings', 'brought', 'bringing',
+            'happen', 'happens', 'happened', 'happening', 'write', 'writes', 'wrote', 'written', 'writing',
+            'sit', 'sits', 'sat', 'sitting', 'stand', 'stands', 'stood', 'standing',
+            'lose', 'loses', 'lost', 'losing', 'pay', 'pays', 'paid', 'paying',
+            'meet', 'meets', 'met', 'meeting', 'include', 'includes', 'included', 'including',
+            'continue', 'continues', 'continued', 'continuing', 'set', 'sets', 'setting',
+            'learn', 'learns', 'learned', 'learnt', 'learning', 'change', 'changes', 'changed', 'changing',
+            'lead', 'leads', 'led', 'leading', 'understand', 'understands', 'understood', 'understanding',
+            'watch', 'watches', 'watched', 'watching', 'follow', 'follows', 'followed', 'following',
+            'stop', 'stops', 'stopped', 'stopping', 'create', 'creates', 'created', 'creating',
+            'speak', 'speaks', 'spoke', 'spoken', 'speaking', 'read', 'reads', 'reading',
+            'allow', 'allows', 'allowed', 'allowing', 'add', 'adds', 'added', 'adding',
+            'spend', 'spends', 'spent', 'spending', 'grow', 'grows', 'grew', 'grown', 'growing',
+            'open', 'opens', 'opened', 'opening', 'walk', 'walks', 'walked', 'walking',
+            'win', 'wins', 'won', 'winning', 'offer', 'offers', 'offered', 'offering',
+            'remember', 'remembers', 'remembered', 'remembering', 'love', 'loves', 'loved', 'loving',
+            'consider', 'considers', 'considered', 'considering', 'appear', 'appears', 'appeared', 'appearing',
+            'buy', 'buys', 'bought', 'buying', 'wait', 'waits', 'waited', 'waiting',
+            'serve', 'serves', 'served', 'serving', 'die', 'dies', 'died', 'dying',
+            'send', 'sends', 'sent', 'sending', 'expect', 'expects', 'expected', 'expecting',
+            'build', 'builds', 'built', 'building', 'stay', 'stays', 'stayed', 'staying',
+            'fall', 'falls', 'fell', 'fallen', 'falling', 'cut', 'cuts', 'cutting',
+            'reach', 'reaches', 'reached', 'reaching', 'kill', 'kills', 'killed', 'killing',
+            'remain', 'remains', 'remained', 'remaining', 'suggest', 'suggests', 'suggested', 'suggesting',
+            'raise', 'raises', 'raised', 'raising', 'pass', 'passes', 'passed', 'passing',
+            'sell', 'sells', 'sold', 'selling', 'require', 'requires', 'required', 'requiring',
+            'report', 'reports', 'reported', 'reporting', 'decide', 'decides', 'decided', 'deciding',
+            'pull', 'pulls', 'pulled', 'pulling',
+            
+            // Prepositions
+            'in', 'on', 'at', 'by', 'for', 'with', 'without', 'to', 'from', 'of', 'about', 'into',
+            'through', 'during', 'before', 'after', 'above', 'below', 'up', 'down', 'out', 'off',
+            'over', 'under', 'again', 'further', 'then', 'once', 'between', 'against', 'within',
+            'across', 'behind', 'beside', 'beyond', 'inside', 'outside', 'throughout', 'towards',
+            'underneath', 'upon', 'around', 'near', 'far', 'away', 'along', 'among', 'amongst',
+            
+            // Conjunctions
+            'and', 'or', 'but', 'nor', 'so', 'yet', 'if', 'unless', 'because', 'since', 'as',
+            'though', 'although', 'while', 'whereas', 'until', 'when', 'whenever', 'where',
+            'wherever', 'whether', 'than', 'that', 'either', 'neither', 'both',
+            
+            // Determiners and quantifiers
+            'this', 'that', 'these', 'those', 'all', 'any', 'both', 'each', 'every', 'few', 'many',
+            'much', 'more', 'most', 'other', 'another', 'some', 'such', 'no', 'none', 'only',
+            'own', 'same', 'several', 'enough', 'little', 'less', 'least', 'whole', 'entire',
+            
+            // Common adverbs
+            'not', 'very', 'too', 'so', 'just', 'only', 'even', 'also', 'still', 'already',
+            'yet', 'never', 'always', 'often', 'sometimes', 'usually', 'generally', 'particularly',
+            'especially', 'quite', 'rather', 'really', 'actually', 'certainly', 'probably',
+            'possibly', 'perhaps', 'maybe', 'definitely', 'absolutely', 'completely', 'totally',
+            'exactly', 'precisely', 'approximately', 'roughly', 'nearly', 'almost', 'hardly',
+            'barely', 'scarcely', 'mainly', 'mostly', 'largely', 'primarily', 'specifically',
+            'truly', 'clearly', 'obviously', 'apparently', 'unfortunately', 'fortunately',
+            'however', 'therefore', 'thus', 'hence', 'consequently', 'accordingly', 'moreover',
+            'furthermore', 'additionally', 'besides', 'meanwhile', 'otherwise', 'instead',
+            'likewise', 'similarly', 'nevertheless', 'nonetheless', 'regardless', 'despite',
+            'finally', 'eventually', 'initially', 'originally', 'previously', 'formerly',
+            'recently', 'currently', 'presently', 'immediately', 'suddenly', 'gradually',
+            'quickly', 'slowly', 'carefully', 'easily', 'simply', 'basically', 'essentially',
+            
+            // Question words
+            'what', 'which', 'who', 'whom', 'whose', 'why', 'how', 'where', 'when',
+            
+            // Time-related words
+            'now', 'then', 'today', 'tomorrow', 'yesterday', 'soon', 'later', 'earlier',
+            'ago', 'since', 'until', 'during', 'while', 'before', 'after', 'first', 'last',
+            'next', 'previous', 'current', 'past', 'future', 'present',
+            
+            // Common adjectives that are usually not keywords
+            'good', 'bad', 'better', 'best', 'worse', 'worst', 'high', 'low', 'big', 'small',
+            'large', 'great', 'long', 'short', 'old', 'new', 'young', 'easy', 'hard', 'difficult',
+            'simple', 'complex', 'clear', 'unclear', 'sure', 'unsure', 'certain', 'uncertain',
+            'possible', 'impossible', 'necessary', 'important', 'unimportant', 'useful', 'useless',
+            'right', 'wrong', 'true', 'false', 'real', 'fake', 'full', 'empty', 'free', 'busy',
+            'open', 'closed', 'hot', 'cold', 'warm', 'cool', 'fast', 'slow', 'quick', 'late',
+            'early', 'ready', 'available', 'nice', 'fine', 'ok', 'okay', 'alright',
+            
+            // Numbers (spelled out)
+            'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+            'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen',
+            'eighteen', 'nineteen', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy',
+            'eighty', 'ninety', 'hundred', 'thousand', 'million', 'billion', 'first', 'second',
+            'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth',
+            
+            // Other common function words
+            'here', 'there', 'everywhere', 'anywhere', 'somewhere', 'nowhere', 'way', 'ways',
+            'thing', 'things', 'something', 'anything', 'nothing', 'everything', 'someone',
+            'anyone', 'everyone', 'no one', 'nobody', 'somebody', 'everybody', 'anybody',
+            'kind', 'type', 'sort', 'part', 'parts', 'place', 'places', 'time', 'times',
+            'day', 'days', 'year', 'years', 'week', 'weeks', 'month', 'months', 'hour',
+            'hours', 'minute', 'minutes', 'second', 'seconds', 'moment', 'moments',
+            'area', 'areas', 'side', 'sides', 'end', 'ends', 'point', 'points', 'line', 'lines',
+            'number', 'numbers', 'group', 'groups', 'fact', 'facts', 'example', 'examples',
+            'problem', 'problems', 'question', 'questions', 'answer', 'answers', 'reason', 'reasons',
+            'result', 'results', 'case', 'cases', 'word', 'words', 'name', 'names',
+            'story', 'stories', 'idea', 'ideas', 'information', 'data', 'research', 'study', 'studies',
+            
+            // Common interjections and exclamations
+            'oh', 'ah', 'eh', 'um', 'uh', 'hmm', 'wow', 'yes', 'no', 'yeah', 'yep', 'nope',
+            'sure', 'please', 'thanks', 'thank', 'welcome', 'sorry', 'excuse', 'pardon',
+            
+            // Common contractions (expanded forms)
+            'dont', 'doesnt', 'didnt', 'wont', 'wouldnt', 'couldnt', 'shouldnt', 'cant', 'cannot',
+            'isnt', 'arent', 'wasnt', 'werent', 'havent', 'hasnt', 'hadnt', 'ive', 'youve',
+            'weve', 'theyve', 'ill', 'youll', 'hell', 'shell', 'well', 'theyll', 'im', 'youre',
+            'hes', 'shes', 'its', 'were', 'theyre', 'thats', 'whats', 'whos', 'wheres', 'whens',
+            'whys', 'hows', 'lets'
+        ]);
+
+        function cleanText(text) {
+            return text.toLowerCase()
+                      .replace(/[^\w\s-]/g, ' ')  // Keep hyphens for compound words
+                      .replace(/\s+/g, ' ')
+                      .trim();
+        }
+
+        function filterStopWords(words) {
+            return words.filter(word => !stopWords.has(word) && word.length > 1);
+        }
+
+        function isValidKeyword(word) {
+            // Check if word is meaningful
+            if (word.length < 2) return false;
+            if (stopWords.has(word)) return false;
+            if (/^\d+$/.test(word)) return false; // Skip pure numbers
+            return true;
+        }
+
+        function getNGrams(words, n) {
+            const ngrams = {};
+            for (let i = 0; i <= words.length - n; i++) {
+                const phrase = words.slice(i, i + n);
+                
+                // For all phrases, ALL words must be valid keywords
+                const allWordsAreKeywords = phrase.every(word => isValidKeyword(word));
+                
+                if (!allWordsAreKeywords) {
+                    continue;
+                }
+                
+                const phraseStr = phrase.join(' ');
+                ngrams[phraseStr] = (ngrams[phraseStr] || 0) + 1;
+            }
+            return ngrams;
+        }
+
+        function analyzeText() {
+            const text = document.getElementById('textInput').value.trim();
+            
+            if (!text) {
+                alert('Please enter some text to analyze.');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').classList.remove('show');
+
+            setTimeout(() => {
+                const cleanedText = cleanText(text);
+                const words = cleanedText.split(' ').filter(word => word.length > 0);
+                const totalWords = words.length;
+
+                // Calculate statistics (using filtered words for meaningful words count)
+                const filteredWords = filterStopWords(words);
+                const uniqueWords = new Set(filteredWords).size;
+                const averageWordLength = filteredWords.length > 0 ? 
+                    filteredWords.reduce((sum, word) => sum + word.length, 0) / filteredWords.length : 0;
+                
+                // Generate stats cards
+                const statsHtml = `
+                    <div class="stat-card">
+                        <h3>${totalWords}</h3>
+                        <p>Total Words</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${filteredWords.length}</h3>
+                        <p>Meaningful Words</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${uniqueWords}</h3>
+                        <p>Unique Keywords</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${averageWordLength.toFixed(1)}</h3>
+                        <p>Avg Word Length</p>
+                    </div>
+                `;
+                document.getElementById('stats').innerHTML = statsHtml;
+
+                // Analyze different n-grams
+                const analyses = [
+                    { n: 1, bodyId: 'oneWordBody', countId: 'oneWordCount' },
+                    { n: 2, bodyId: 'twoWordBody', countId: 'twoWordCount' },
+                    { n: 3, bodyId: 'threeWordBody', countId: 'threeWordCount' },
+                    { n: 4, bodyId: 'fourWordBody', countId: 'fourWordCount' }
+                ];
+
+                analyses.forEach(({ n, bodyId, countId }) => {
+                    const ngrams = getNGrams(words, n);
+                    const totalPossibleNgrams = Math.max(1, totalWords - n + 1);
+                    
+                    // Sort by frequency
+                    const sorted = Object.entries(ngrams)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 20); // Top 20 results
+
+                    const tbody = document.getElementById(bodyId);
+                    const countElement = document.getElementById(countId);
+                    
+                    // Update count and add validation
+                    const totalUniqueKeywords = Object.keys(ngrams).length;
+                    const displayedKeywords = sorted.length;
+                    
+                    if (totalUniqueKeywords === 0) {
+                        countElement.textContent = '0 keywords';
+                    } else if (totalUniqueKeywords <= 20) {
+                        countElement.textContent = `${totalUniqueKeywords} keyword${totalUniqueKeywords === 1 ? '' : 's'}`;
+                    } else {
+                        countElement.textContent = `Top 20 of ${totalUniqueKeywords} keywords`;
+                    }
+                    
+                    if (sorted.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No meaningful keywords found</td></tr>';
+                    } else {
+                        tbody.innerHTML = sorted.map(([phrase, frequency], index) => {
+                            const percentage = ((frequency / totalPossibleNgrams) * 100).toFixed(1);
+                            const density = ((frequency / totalWords) * 100).toFixed(2);
+                            const rank = index + 1;
+                            
+                            // Add visual indicator for high density (potential over-optimization)
+                            const densityClass = parseFloat(density) > 5 ? 'style="color: #e74c3c; font-weight: bold;"' : '';
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${rank}</strong></td>
+                                    <td><strong>${phrase}</strong></td>
+                                    <td class="frequency">${frequency}</td>
+                                    <td class="percentage">${percentage}%</td>
+                                    <td>${totalPossibleNgrams}</td>
+                                    <td ${densityClass}>${density}%</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                });
+
+                // Hide loading and show results
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results').classList.add('show');
+                
+                // Smooth scroll to results
+                document.getElementById('results').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 1000);
+        }
+
+        // Allow Enter key to trigger analysis
+        document.getElementById('textInput').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                analyzeText();
+            }
+        });
+    </script>
+</body>
+</html>
