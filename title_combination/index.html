@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🔤 Advanced Phrase Combination Generator</title>
+    
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -410,13 +415,78 @@
             transform: translateY(-2px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .auth-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 20px;
+        }
+
+        .auth-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-email {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
     </style>
 </head>
 <body>
+    <!-- Loading screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="auth-spinner"></div>
+        <div>Checking authentication...</div>
+    </div>
+
+    <div id="mainContent" style="display: none;">
     <div class="container">
         <div class="header">
             <h1>🔤 Phrase Combination Generator</h1>
             <p>Generate all possible adjacent word combinations from your text with advanced options</p>
+            <div class="auth-info" id="userInfo">
+                <!-- User info will be populated here -->
+            </div>
         </div>
 
         <!-- Input Section -->
@@ -958,6 +1028,86 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Uncomment the line below to add a demo button
             // addDemoButton();
+        });
+    </script>
+    
+    </div> <!-- End of mainContent -->
+
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
+            authDomain: "asotools-auth.firebaseapp.com",
+            projectId: "asotools-auth",
+            storageBucket: "asotools-auth.firebasestorage.app",
+            messagingSenderId: "673087191334",
+            appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
+            measurementId: "G-TC77Q0EMBJ"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        let currentUser = null;
+
+        // Authentication state observer
+        auth.onAuthStateChanged((user) => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContent = document.getElementById('mainContent');
+
+            if (user) {
+                // User is signed in
+                currentUser = user;
+                console.log('User authenticated:', user.email);
+
+                // Show main content
+                loadingScreen.style.display = 'none';
+                mainContent.style.display = 'block';
+
+                // Update user info in header
+                updateUserInfo(user);
+
+            } else {
+                // User is signed out
+                console.log('User not authenticated, redirecting to login');
+
+                // Hide main content and show loading
+                mainContent.style.display = 'none';
+                loadingScreen.innerHTML = `
+                    <div class="auth-spinner"></div>
+                    <div>Redirecting to login...</div>
+                `;
+
+                // Redirect to login page after a short delay
+                setTimeout(() => {
+                    // Store current location for redirect after login
+                    sessionStorage.setItem('redirectAfterLogin', '../title_combination/');
+                    window.location.href = "../login/";
+                }, 1000);
+            }
+        });
+
+        function updateUserInfo(user) {
+            const userInfo = document.getElementById('userInfo');
+            if (userInfo) {
+                userInfo.innerHTML = `
+                    <span class="user-email">Welcome, ${user.email}</span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                `;
+            }
+        }
+
+        function logout() {
+            auth.signOut();
+        }
+
+        // Wait for Firebase Auth to initialize before hiding loading screen
+        let authInitialized = false;
+        auth.onAuthStateChanged(() => {
+            if (!authInitialized) {
+                authInitialized = true;
+            }
         });
     </script>
 </body>
