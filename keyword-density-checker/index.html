@@ -193,6 +193,33 @@
             border-color: rgba(46, 213, 115, 0.5);
         }
 
+        .copy-all-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .copy-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .copy-all-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-all-btn.copied {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+
         .keyword-count {
             background: rgba(255, 255, 255, 0.2);
             padding: 5px 12px;
@@ -500,7 +527,13 @@
         <div class="results-section" id="results">
             <div class="stats" id="stats"></div>
             
-            <div class="warning-section">
+            <div style="text-align: center; margin: 20px 0;">
+                <button class="copy-all-btn" onclick="copyAllKeywords()" title="Copy all keywords from all categories">
+                    📋 Copy All Keywords
+                </button>
+            </div>
+            
+            <div class="warning-section"></div>
                 <h3>⚠️ Important Notes:</h3>
                 <ul>
                     <li><strong>Stop Words Filtered:</strong> Common words like "the", "and", "is", "you", "can" are automatically excluded</li>
@@ -1195,6 +1228,71 @@
                 btn.innerHTML = originalText;
                 btn.classList.remove('copied');
             }, 2000);
+        }
+
+        // Copy all keywords from all categories
+        function copyAllKeywords() {
+            const categories = [
+                { name: 'ONE WORD KEYWORDS', bodyId: 'oneWordBody' },
+                { name: 'TWO WORD KEYWORDS', bodyId: 'twoWordBody' },
+                { name: 'THREE WORD KEYWORDS', bodyId: 'threeWordBody' },
+                { name: 'FOUR WORD KEYWORDS', bodyId: 'fourWordBody' }
+            ];
+
+            let allData = '';
+            let hasData = false;
+
+            categories.forEach(category => {
+                const tbody = document.getElementById(category.bodyId);
+                if (!tbody) return;
+
+                const rows = tbody.querySelectorAll('tr');
+                if (rows.length === 0 || rows[0].querySelector('.no-data')) {
+                    return;
+                }
+
+                hasData = true;
+
+                // Add category header
+                allData += '\n' + category.name + '\n';
+                allData += '#\tKeyword\tFrequency\tPercentage\tTotal\tDensity\n';
+
+                // Add all rows
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 6) {
+                        const rowData = [
+                            cells[0].textContent.trim(),
+                            cells[1].textContent.trim(),
+                            cells[2].textContent.trim(),
+                            cells[3].textContent.trim(),
+                            cells[4].textContent.trim(),
+                            cells[5].textContent.trim()
+                        ].join('\t');
+                        allData += rowData + '\n';
+                    }
+                });
+            });
+
+            if (!hasData) {
+                alert('No keywords to copy!');
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+
+            // Try modern clipboard API first, fallback to textarea method
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(allData.trim()).then(() => {
+                    showCopySuccess(btn, originalText);
+                }).catch(err => {
+                    console.error('Clipboard API failed:', err);
+                    fallbackCopy(allData.trim(), btn, originalText);
+                });
+            } else {
+                fallbackCopy(allData.trim(), btn, originalText);
+            }
         }
     </script>
     
