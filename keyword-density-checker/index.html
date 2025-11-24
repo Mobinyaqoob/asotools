@@ -1375,7 +1375,7 @@
             }
         });
     </script>
-<button onclick="copyAll()">Copy All Keywords</button>
+
 </body>
 
 <script>
@@ -1384,11 +1384,6 @@ function copyText(id){
     el.select();
     document.execCommand('copy');
 }
-function copyAll(){
-    const ids=['primaryKeywords','secondaryKeywords','lsiKeywords'];
-    let all='';
-    ids.forEach(i=>{all+=document.getElementById(i).value+'\n';});
-    navigator.clipboard.writeText(all.trim());
-}
+
 </script>
 </html>
