@@ -158,6 +158,41 @@
             align-items: center;
         }
 
+        .section-title-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn.copied {
+            background: rgba(46, 213, 115, 0.3);
+            border-color: rgba(46, 213, 115, 0.5);
+        }
+
         .keyword-count {
             background: rgba(255, 255, 255, 0.2);
             padding: 5px 12px;
@@ -477,7 +512,12 @@
             
             <div class="keyword-section">
                 <div class="section-title">
-                    <span>One Word Keywords</span>
+                    <div class="section-title-left">
+                        <span>One Word Keywords</span>
+                        <button class="copy-btn" onclick="copyKeywords(1)" title="Copy keywords for Excel/Google Sheets">
+                            📋 Copy
+                        </button>
+                    </div>
                     <span class="keyword-count" id="oneWordCount">0 keywords</span>
                 </div>
                 <table class="keyword-table" id="oneWordTable">
@@ -545,7 +585,12 @@
 
             <div class="keyword-section">
                 <div class="section-title">
-                    <span>Two Word Keywords</span>
+                    <div class="section-title-left">
+                        <span>Two Word Keywords</span>
+                        <button class="copy-btn" onclick="copyKeywords(2)" title="Copy keywords for Excel/Google Sheets">
+                            📋 Copy
+                        </button>
+                    </div>
                     <span class="keyword-count" id="twoWordCount">0 keywords</span>
                 </div>
                 <table class="keyword-table" id="twoWordTable">
@@ -613,7 +658,12 @@
 
             <div class="keyword-section">
                 <div class="section-title">
-                    <span>Three Word Keywords</span>
+                    <div class="section-title-left">
+                        <span>Three Word Keywords</span>
+                        <button class="copy-btn" onclick="copyKeywords(3)" title="Copy keywords for Excel/Google Sheets">
+                            📋 Copy
+                        </button>
+                    </div>
                     <span class="keyword-count" id="threeWordCount">0 keywords</span>
                 </div>
                 <table class="keyword-table" id="threeWordTable">
@@ -681,7 +731,12 @@
 
             <div class="keyword-section">
                 <div class="section-title">
-                    <span>Four Word Keywords</span>
+                    <div class="section-title-left">
+                        <span>Four Word Keywords</span>
+                        <button class="copy-btn" onclick="copyKeywords(4)" title="Copy keywords for Excel/Google Sheets">
+                            📋 Copy
+                        </button>
+                    </div>
                     <span class="keyword-count" id="fourWordCount">0 keywords</span>
                 </div>
                 <table class="keyword-table" id="fourWordTable">
@@ -1052,6 +1107,60 @@
                 analyzeText();
             }
         });
+
+        // Copy keywords function for Excel/Google Sheets
+        function copyKeywords(wordCount) {
+            const bodyIds = {
+                1: 'oneWordBody',
+                2: 'twoWordBody',
+                3: 'threeWordBody',
+                4: 'fourWordBody'
+            };
+
+            const tbody = document.getElementById(bodyIds[wordCount]);
+            if (!tbody) return;
+
+            const rows = tbody.querySelectorAll('tr');
+            if (rows.length === 0 || rows[0].querySelector('.no-data')) {
+                alert('No keywords to copy!');
+                return;
+            }
+
+            // Create tab-separated values for Excel/Google Sheets
+            let tsvData = '#\tKeyword\tFrequency\tPercentage\tTotal\tDensity\n';
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 6) {
+                    const rowData = [
+                        cells[0].textContent.trim(),  // Rank
+                        cells[1].textContent.trim(),  // Keyword
+                        cells[2].textContent.trim(),  // Frequency
+                        cells[3].textContent.trim(),  // Percentage
+                        cells[4].textContent.trim(),  // Total
+                        cells[5].textContent.trim()   // Density
+                    ].join('\t');
+                    tsvData += rowData + '\n';
+                }
+            });
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(tsvData).then(() => {
+                // Visual feedback
+                const btn = event.target.closest('.copy-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✓ Copied!';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard. Please try again.');
+            });
+        }
     </script>
     
     </div> <!-- End of mainContent -->
