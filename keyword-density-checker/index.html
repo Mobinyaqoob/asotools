@@ -1141,7 +1141,7 @@
             }
         });
 
-        // Copy keywords function for Excel/Google Sheets
+        // Copy keywords function - only keywords, one per line
         function copyKeywords(wordCount) {
             const bodyIds = {
                 1: 'oneWordBody',
@@ -1159,21 +1159,14 @@
                 return;
             }
 
-            // Create tab-separated values for Excel/Google Sheets
-            let tsvData = '#\tKeyword\tFrequency\tPercentage\tTotal\tDensity\n';
+            // Extract only keywords (second column)
+            let keywordsList = '';
             
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length >= 6) {
-                    const rowData = [
-                        cells[0].textContent.trim(),  // Rank
-                        cells[1].textContent.trim(),  // Keyword
-                        cells[2].textContent.trim(),  // Frequency
-                        cells[3].textContent.trim(),  // Percentage
-                        cells[4].textContent.trim(),  // Total
-                        cells[5].textContent.trim()   // Density
-                    ].join('\t');
-                    tsvData += rowData + '\n';
+                if (cells.length >= 2) {
+                    const keyword = cells[1].textContent.trim();  // Only the keyword
+                    keywordsList += keyword + '\n';
                 }
             });
 
@@ -1183,14 +1176,14 @@
 
             // Try modern clipboard API first, fallback to textarea method
             if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(tsvData).then(() => {
+                navigator.clipboard.writeText(keywordsList.trim()).then(() => {
                     showCopySuccess(btn, originalText);
                 }).catch(err => {
                     console.error('Clipboard API failed:', err);
-                    fallbackCopy(tsvData, btn, originalText);
+                    fallbackCopy(keywordsList.trim(), btn, originalText);
                 });
             } else {
-                fallbackCopy(tsvData, btn, originalText);
+                fallbackCopy(keywordsList.trim(), btn, originalText);
             }
         }
 
@@ -1230,16 +1223,16 @@
             }, 2000);
         }
 
-        // Copy all keywords from all categories
+        // Copy all keywords from all categories - only keywords, one per line
         function copyAllKeywords() {
             const categories = [
-                { name: 'ONE WORD KEYWORDS', bodyId: 'oneWordBody' },
-                { name: 'TWO WORD KEYWORDS', bodyId: 'twoWordBody' },
-                { name: 'THREE WORD KEYWORDS', bodyId: 'threeWordBody' },
-                { name: 'FOUR WORD KEYWORDS', bodyId: 'fourWordBody' }
+                { bodyId: 'oneWordBody' },
+                { bodyId: 'twoWordBody' },
+                { bodyId: 'threeWordBody' },
+                { bodyId: 'fourWordBody' }
             ];
 
-            let allData = '';
+            let allKeywords = '';
             let hasData = false;
 
             categories.forEach(category => {
@@ -1253,23 +1246,12 @@
 
                 hasData = true;
 
-                // Add category header
-                allData += '\n' + category.name + '\n';
-                allData += '#\tKeyword\tFrequency\tPercentage\tTotal\tDensity\n';
-
-                // Add all rows
+                // Extract only keywords (second column)
                 rows.forEach(row => {
                     const cells = row.querySelectorAll('td');
-                    if (cells.length >= 6) {
-                        const rowData = [
-                            cells[0].textContent.trim(),
-                            cells[1].textContent.trim(),
-                            cells[2].textContent.trim(),
-                            cells[3].textContent.trim(),
-                            cells[4].textContent.trim(),
-                            cells[5].textContent.trim()
-                        ].join('\t');
-                        allData += rowData + '\n';
+                    if (cells.length >= 2) {
+                        const keyword = cells[1].textContent.trim();
+                        allKeywords += keyword + '\n';
                     }
                 });
             });
@@ -1284,14 +1266,14 @@
 
             // Try modern clipboard API first, fallback to textarea method
             if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(allData.trim()).then(() => {
+                navigator.clipboard.writeText(allKeywords.trim()).then(() => {
                     showCopySuccess(btn, originalText);
                 }).catch(err => {
                     console.error('Clipboard API failed:', err);
-                    fallbackCopy(allData.trim(), btn, originalText);
+                    fallbackCopy(allKeywords.trim(), btn, originalText);
                 });
             } else {
-                fallbackCopy(allData.trim(), btn, originalText);
+                fallbackCopy(allKeywords.trim(), btn, originalText);
             }
         }
     </script>
