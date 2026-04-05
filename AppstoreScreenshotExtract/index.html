@@ -1,624 +1,687 @@
-<style>
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+<!DOCTYPE html>
+<html lang="en">
 
-  .wrap {
-    padding: 1rem 0;
-    font-family: var(--font-sans);
-  }
-
-  .header {
-    margin-bottom: 1.25rem;
-  }
-
-  .header h2 {
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--color-text-primary);
-    margin-bottom: 4px;
-  }
-
-  .header p {
-    font-size: 13px;
-    color: var(--color-text-secondary);
-  }
-
-  textarea {
-    width: 100%;
-    min-height: 110px;
-    font-size: 13px;
-    font-family: var(--font-mono);
-    padding: 10px 12px;
-    border: 0.5px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    background: var(--color-background-secondary);
-    color: var(--color-text-primary);
-    resize: vertical;
-    line-height: 1.6;
-  }
-
-  textarea:focus {
-    outline: none;
-    border-color: var(--color-border-primary);
-  }
-
-  .btn-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  button {
-    padding: 8px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    border: 0.5px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    background: transparent;
-    color: var(--color-text-primary);
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-
-  button:hover {
-    background: var(--color-background-secondary);
-  }
-
-  button:active {
-    transform: scale(0.98);
-  }
-
-  button.primary {
-    background: var(--color-text-primary);
-    color: var(--color-background-primary);
-    border-color: transparent;
-  }
-
-  button.primary:hover {
-    opacity: 0.88;
-  }
-
-  button:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .results {
-    margin-top: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .app-card {
-    background: var(--color-background-primary);
-    border: 0.5px solid var(--color-border-tertiary);
-    border-radius: var(--border-radius-lg);
-    overflow: hidden;
-  }
-
-  .app-top {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 1rem 1.25rem 0.875rem;
-  }
-
-  .app-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
-    border: 0.5px solid var(--color-border-tertiary);
-    flex-shrink: 0;
-    object-fit: cover;
-    background: var(--color-background-secondary);
-  }
-
-  .app-meta {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .app-name {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--color-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .app-subtitle {
-    font-size: 13px;
-    color: var(--color-text-secondary);
-    margin-top: 3px;
-  }
-
-  .app-dev {
-    font-size: 12px;
-    color: var(--color-text-tertiary);
-    margin-top: 5px;
-  }
-
-  .app-rating {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .stars {
-    color: #f5a623;
-  }
-
-  .app-link {
-    font-size: 12px;
-    color: var(--color-text-info);
-    text-decoration: none;
-    margin-top: 6px;
-    display: inline-block;
-  }
-
-  .app-link:hover {
-    text-decoration: underline;
-  }
-
-  .divider {
-    border: none;
-    border-top: 0.5px solid var(--color-border-tertiary);
-    margin: 0 1.25rem;
-  }
-
-  .screenshots-wrap {
-    padding: 0.75rem 1.25rem 1rem;
-  }
-
-  .screenshots-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--color-text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .badge {
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 20px;
-    font-weight: 400;
-  }
-
-  .badge.api {
-    background: var(--color-background-info);
-    color: var(--color-text-info);
-  }
-
-  .badge.ai {
-    background: var(--color-background-warning);
-    color: var(--color-text-warning);
-  }
-
-  .screenshots {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-
-  .screenshots::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  .screenshots::-webkit-scrollbar-thumb {
-    background: var(--color-border-secondary);
-    border-radius: 2px;
-  }
-
-  .screenshot {
-    height: 160px;
-    border-radius: 10px;
-    border: 0.5px solid var(--color-border-tertiary);
-    flex-shrink: 0;
-    object-fit: cover;
-    cursor: pointer;
-    transition: opacity 0.15s;
-  }
-
-  .screenshot:hover {
-    opacity: 0.82;
-  }
-
-  .no-shots {
-    font-size: 13px;
-    color: var(--color-text-tertiary);
-  }
-
-  .progress-wrap {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .progress-item {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  .dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--color-border-secondary);
-    flex-shrink: 0;
-  }
-
-  .dot.active {
-    background: #007aff;
-    animation: blink 1s infinite;
-  }
-
-  .dot.done {
-    background: #34c759;
-  }
-
-  .dot.fail {
-    background: #ff3b30;
-  }
-
-  @keyframes blink {
-
-    0%,
-    100% {
-      opacity: 1
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Store Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f7f6f3;
+      --surface: #ffffff;
+      --surface2: #f0efe9;
+      --border: rgba(0, 0, 0, 0.08);
+      --border2: rgba(0, 0, 0, 0.14);
+      --text: #1a1916;
+      --text2: #6b6a66;
+      --text3: #a8a79f;
+      --accent: #2d5be3;
+      --accent-bg: #eef1fd;
+      --accent-text: #1e3fa8;
+      --success: #16a34a;
+      --success-bg: #f0fdf4;
+      --warn-bg: #fefce8;
+      --warn-text: #854d0e;
+      --radius: 14px;
+      --radius-sm: 8px;
     }
 
-    50% {
-      opacity: 0.3
-    }
-  }
-
-  .lightbox {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.82);
-    z-index: 999;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .lightbox.open {
-    display: flex;
-  }
-
-  .lightbox img {
-    max-width: 90vw;
-    max-height: 88vh;
-    border-radius: 12px;
-    object-fit: contain;
-  }
-
-  .lb-close {
-    position: fixed;
-    top: 18px;
-    right: 22px;
-    font-size: 28px;
-    color: #fff;
-    cursor: pointer;
-  }
-
-  .skel {
-    animation: pulse 1.4s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-
-    0%,
-    100% {
-      opacity: 1
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    50% {
-      opacity: 0.4
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 80px;
     }
-  }
 
-  .skel-bar {
-    background: var(--color-background-secondary);
-    border-radius: 4px;
-  }
-</style>
+    /* ── Header ── */
+    .header {
+      padding: 48px 24px 32px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
 
-<div class="wrap">
+    .header-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .header h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 300;
+      line-height: 1.15;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .header h1 strong {
+      font-weight: 500;
+    }
+
+    .header p {
+      margin-top: 10px;
+      font-size: 15px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    /* ── Input area ── */
+    .input-section {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .input-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 108px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea::placeholder {
+      color: var(--text3);
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 9px 22px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--surface2);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn.primary {
+      background: var(--text);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .btn.primary:hover {
+      opacity: 0.88;
+      background: var(--text);
+    }
+
+    .status-text {
+      font-size: 13px;
+      color: var(--text3);
+      margin-left: 4px;
+    }
+
+    /* ── Progress ── */
+    .progress-wrap {
+      max-width: 720px;
+      margin: 16px auto 0;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .progress-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text2);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border2);
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .dot.active {
+      background: var(--accent);
+      animation: blink 1s infinite;
+    }
+
+    .dot.done {
+      background: var(--success);
+    }
+
+    .dot.fail {
+      background: #ef4444;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.25
+      }
+    }
+
+    /* ── Results ── */
+    .results {
+      max-width: 720px;
+      margin: 24px auto 0;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── App Card ── */
+    .app-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .app-card:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .app-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 18px 20px 14px;
+    }
+
+    .app-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--surface2);
+    }
+
+    .app-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .app-name {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app-subtitle {
+      font-size: 13px;
+      color: var(--text2);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app-dev {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 5px;
+    }
+
+    .app-rating {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .stars {
+      color: #f59e0b;
+      letter-spacing: 1px;
+    }
+
+    .app-link {
+      display: inline-block;
+      margin-top: 7px;
+      font-size: 12px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .app-link:hover {
+      text-decoration: underline;
+    }
+
+    .card-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0 20px;
+    }
+
+    .screenshots-wrap {
+      padding: 14px 20px 18px;
+    }
+
+    .screenshots-label {
+      font-size: 10.5px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text3);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .badge.api {
+      background: var(--accent-bg);
+      color: var(--accent-text);
+    }
+
+    .badge.ai {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .badge.warn {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+
+    .screenshots {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .screenshots::-webkit-scrollbar {
+      height: 3px;
+    }
+
+    .screenshots::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px;
+    }
+
+    .screenshot {
+      height: 168px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      object-fit: cover;
+      cursor: zoom-in;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+
+    .screenshot:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .no-shots {
+      font-size: 13px;
+      color: var(--text3);
+    }
+
+    /* ── Skeleton ── */
+    .skel {
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.45
+      }
+    }
+
+    .skel-block {
+      background: var(--surface2);
+      border-radius: 6px;
+    }
+
+    /* ── Lightbox ── */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 92vw;
+      max-height: 90vh;
+      border-radius: 12px;
+      object-fit: contain;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+    }
+
+    .lb-close {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      font-size: 26px;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+
+    .lb-close:hover {
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+
   <div class="header">
-    <h2>App Store preview</h2>
-    <p>Paste up to 10 App Store URLs, one per line</p>
+    <div class="header-eyebrow">Tool</div>
+    <h1><strong>App Store</strong><br />Preview</h1>
+    <p>Paste up to 10 App Store URLs and instantly see name, subtitle &amp; screenshots side by side.</p>
   </div>
-  <textarea id="urls" placeholder="https://apps.apple.com/us/app/sticky-note-widget-stickies/id1625584631
+
+  <div class="input-section">
+    <div class="input-card">
+      <textarea id="urls" placeholder="https://apps.apple.com/us/app/sticky-note-widget-stickies/id1625584631
 https://apps.apple.com/us/app/notion/id1232780281
 https://apps.apple.com/us/app/things-3/id904237743"></textarea>
-  <div class="btn-row">
-    <button class="primary" id="fetchBtn" onclick="fetchApps()">Fetch apps</button>
-    <button onclick="clearAll()">Clear</button>
+      <div class="controls">
+        <button class="btn primary" id="fetchBtn" onclick="fetchApps()">Fetch apps</button>
+        <button class="btn" onclick="clearAll()">Clear</button>
+        <span class="status-text" id="statusText"></span>
+      </div>
+    </div>
   </div>
+
   <div class="progress-wrap" id="progressWrap"></div>
   <div class="results" id="results"></div>
-</div>
 
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <span class="lb-close">&times;</span>
-  <img id="lb-img" src="" />
-</div>
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lb-close" onclick="closeLightbox()">&#x2715;</span>
+    <img id="lbImg" src="" alt="" />
+  </div>
 
-<script>
-  const COUNTRIES = ['us', 'gb', 'au', 'de', 'fr', 'ca', 'jp'];
+  <script>
+    // ── CORS proxy: routes all fetches through a proxy that adds CORS headers ──
+    const PROXY = url => `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    const COUNTRIES = ['us', 'gb', 'au', 'de', 'fr', 'ca', 'jp'];
 
-  function extractId(url) {
-    const m = url.match(/\/id(\d+)/i);
-    return m ? m[1] : null;
-  }
-  function starsHtml(r) {
-    return Array.from({ length: 5 }, (_, i) => i < Math.round(r) ? '★' : '☆').join('');
-  }
+    function extractId(url) {
+      const m = url.match(/\/id(\d+)/i);
+      return m ? m[1] : null;
+    }
+    function starsHtml(r) {
+      return Array.from({ length: 5 }, (_, i) => i < Math.round(r) ? '★' : '☆').join('');
+    }
 
-  // ── Your proven srcset extractor logic ──────────────────────────────────────
-  function normalizeUrl(url) {
-    if (!url) return '';
-    url = url.trim();
-    if (url.startsWith('//')) return 'https:' + url;
-    return url;
-  }
-
-  function isClean1024(url) {
-    if (!url.endsWith('/1024x1024bb.webp')) return false;
-    const matches = url.match(/\d+x\d+bb/g);
-    return matches && matches.length === 1;
-  }
-
-  function extractUniqueClean1024FromHtml(html) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const uniqueMap = new Map();
-
-    doc.querySelectorAll('[srcset]').forEach(el => {
-      const srcset = el.getAttribute('srcset');
-      if (!srcset) return;
-
-      srcset.split(',').forEach(item => {
-        const parts = item.trim().split(/\s+/);
-        let url = normalizeUrl(parts[0]);
-        if (!url) return;
-
-        // Only keep clean 1024x1024bb.webp URLs (your proven filter)
-        if (!isClean1024(url)) return;
-
-        // Deduplicate by base JPG path (your unique JPG logic)
-        const match = url.match(/(.+\.jpg)/);
-        const key = match ? match[1] : url;
-        if (!uniqueMap.has(key)) {
-          uniqueMap.set(key, url);
-        }
+    // ── Your proven srcset extractor ────────────────────────────────────────────
+    function normalizeUrl(u) {
+      if (!u) return '';
+      u = u.trim();
+      return u.startsWith('//') ? 'https:' + u : u;
+    }
+    function isClean1024(u) {
+      if (!u.endsWith('/1024x1024bb.webp')) return false;
+      const m = u.match(/\d+x\d+bb/g);
+      return m && m.length === 1;
+    }
+    function extractUniqueClean1024(html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const map = new Map();
+      doc.querySelectorAll('[srcset]').forEach(el => {
+        const srcset = el.getAttribute('srcset') || '';
+        srcset.split(',').forEach(item => {
+          const parts = item.trim().split(/\s+/);
+          const url = normalizeUrl(parts[0]);
+          if (!url || !isClean1024(url)) return;
+          const m = url.match(/(.+\.jpg)/);
+          const key = m ? m[1] : url;
+          if (!map.has(key)) map.set(key, url);
+        });
       });
-    });
+      return Array.from(map.values());
+    }
+    // ────────────────────────────────────────────────────────────────────────────
 
-    return Array.from(uniqueMap.values());
-  }
-  // ────────────────────────────────────────────────────────────────────────────
+    // Step 1: iTunes API via CORS proxy
+    async function tryItunes(appId) {
+      let baseApp = null;
+      for (const cc of COUNTRIES) {
+        try {
+          const url = `https://itunes.apple.com/lookup?id=${appId}&country=${cc}&entity=software`;
+          const r = await fetch(PROXY(url));
+          if (!r.ok) continue;
+          const d = await r.json();
+          const app = (d.results || []).find(x => x.wrapperType === 'software' || x.kind === 'software');
+          if (!app) continue;
+          if (!baseApp) baseApp = app;
+          if (app.screenshotUrls && app.screenshotUrls.length > 0)
+            return { app, shots: app.screenshotUrls, source: 'api' };
+        } catch (e) { }
+      }
+      return { app: baseApp, shots: [], source: 'none' };
+    }
 
-  // Step 1: iTunes API
-  async function tryItunes(appId) {
-    for (const cc of COUNTRIES) {
+    // Step 2: Fetch App Store page via CORS proxy, apply your srcset extractor
+    async function fetchShotsViaPage(appId) {
+      const pageUrl = `https://apps.apple.com/us/app/id${appId}`;
       try {
-        const r = await fetch(`https://itunes.apple.com/lookup?id=${appId}&country=${cc}&entity=software`);
-        const d = await r.json();
-        const app = (d.results || []).find(x => x.wrapperType === 'software' || x.kind === 'software');
-        if (!app) continue;
-        if (app.screenshotUrls && app.screenshotUrls.length > 0) {
-          return { app, shots: app.screenshotUrls, source: 'api' };
-        }
-      } catch (e) { }
+        const r = await fetch(PROXY(pageUrl), { signal: AbortSignal.timeout(12000) });
+        if (!r.ok) return [];
+        const html = await r.text();
+        return extractUniqueClean1024(html);
+      } catch (e) { return []; }
     }
-    // Return metadata without shots
-    try {
-      const r = await fetch(`https://itunes.apple.com/lookup?id=${appId}&country=us&entity=software`);
-      const d = await r.json();
-      const app = (d.results || []).find(x => x.wrapperType === 'software' || x.kind === 'software');
-      return { app: app || null, shots: [], source: 'none' };
-    } catch (e) { return { app: null, shots: [], source: 'none' }; }
-  }
 
-  // Step 2: Use Claude AI to fetch the App Store page and apply your srcset extractor
-  async function fetchShotsViaAI(appId) {
-    const pageUrl = `https://apps.apple.com/us/app/id${appId}`;
+    // ── UI helpers ──────────────────────────────────────────────────────────────
+    function setDot(i, s) { const el = document.getElementById('dot-' + i); if (el) el.className = 'dot ' + s; }
+    function setLabel(i, t) { const el = document.getElementById('lbl-' + i); if (el) el.textContent = t; }
 
-    const prompt = `Fetch this URL and return ONLY the raw HTML content, nothing else: ${pageUrl}
-
-Actually — I need you to act as a web scraper. Make a GET request to:
-${pageUrl}
-
-Then extract all srcset attribute values from all HTML elements. For each srcset, split by comma, take each URL, and return only URLs that:
-1. End with exactly "/1024x1024bb.webp"
-2. Contain only ONE occurrence of "\\d+x\\d+bb" in the entire URL
-
-Deduplicate by the base .jpg path (everything up to and including .jpg).
-
-Return ONLY a JSON array of the final clean URLs. No explanation. No markdown. Just the JSON array like: ["url1","url2"]
-
-If none found, return: []`;
-
-    try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      const data = await resp.json();
-      const text = (data.content || []).map(b => b.text || '').join('').trim();
-      const clean = text.replace(/```json|```/g, '').trim();
-      // Find JSON array in response
-      const match = clean.match(/\[[\s\S]*\]/);
-      if (!match) return [];
-      const parsed = JSON.parse(match[0]);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // Step 2b: CORS proxy fallback — fetch raw HTML, apply your srcset extractor directly
-  async function fetchShotsViaProxy(appId) {
-    const pageUrl = `https://apps.apple.com/us/app/id${appId}`;
-    const proxies = [
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(pageUrl)}`,
-      `https://corsproxy.io/?${encodeURIComponent(pageUrl)}`,
-    ];
-
-    for (const proxyUrl of proxies) {
-      try {
-        const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(9000) });
-        if (!resp.ok) continue;
-        const html = await resp.text();
-        const shots = extractUniqueClean1024FromHtml(html);
-        if (shots.length > 0) return shots;
-      } catch (e) { }
-    }
-    return [];
-  }
-
-  function renderCard(app, shots, source) {
-    const icon = app.artworkUrl512 || app.artworkUrl100 || app.artworkUrl60 || '';
-    const rating = app.averageUserRating;
-    const ratingCount = app.userRatingCount;
-    const badgeHtml = source === 'api'
-      ? `<span class="badge api">iTunes API</span>`
-      : source === 'ai'
-        ? `<span class="badge ai">AI extracted</span>`
-        : '';
-
-    return `<div class="app-card">
+    function skeletonCard() {
+      return `<div class="app-card skel">
     <div class="app-top">
-      ${icon ? `<img class="app-icon" src="${icon}" alt="" loading="lazy" />` : `<div class="app-icon"></div>`}
+      <div class="skel-block" style="width:68px;height:68px;border-radius:16px;flex-shrink:0"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:8px;padding-top:4px">
+        <div class="skel-block" style="height:15px;width:48%"></div>
+        <div class="skel-block" style="height:13px;width:68%"></div>
+        <div class="skel-block" style="height:11px;width:32%"></div>
+      </div>
+    </div>
+    <div style="padding:0 20px 18px;display:flex;gap:8px">
+      ${[0, 1, 2].map(() => `<div class="skel-block" style="width:86px;height:168px;border-radius:10px;flex-shrink:0"></div>`).join('')}
+    </div>
+  </div>`;
+    }
+
+    function renderCard(app, shots, source) {
+      const icon = app.artworkUrl512 || app.artworkUrl100 || app.artworkUrl60 || '';
+      const rating = app.averageUserRating;
+      const ratingCount = app.userRatingCount;
+      const badge = source === 'api'
+        ? `<span class="badge api">iTunes API</span>`
+        : source === 'page'
+          ? `<span class="badge ai">App Store page</span>`
+          : '';
+
+      return `<div class="app-card">
+    <div class="app-top">
+      ${icon ? `<img class="app-icon" src="${icon}" alt="" loading="lazy"/>` : `<div class="app-icon"></div>`}
       <div class="app-meta">
         <div class="app-name">${app.trackName || 'Unknown'}</div>
         ${app.subtitle ? `<div class="app-subtitle">${app.subtitle}</div>` : ''}
         ${app.artistName ? `<div class="app-dev">by ${app.artistName}</div>` : ''}
-        ${rating ? `<div class="app-rating"><span class="stars">${starsHtml(rating)}</span> ${rating.toFixed(1)}${ratingCount ? ` · ${ratingCount.toLocaleString()} ratings` : ''}</div>` : ''}
-        ${app.trackViewUrl ? `<a class="app-link" href="${app.trackViewUrl}" target="_blank">View on App Store ↗</a>` : ''}
+        ${rating ? `<div class="app-rating"><span class="stars">${starsHtml(rating)}</span>${rating.toFixed(1)}${ratingCount ? ` &middot; ${ratingCount.toLocaleString()} ratings` : ''}</div>` : ''}
+        ${app.trackViewUrl ? `<a class="app-link" href="${app.trackViewUrl}" target="_blank" rel="noopener">View on App Store ↗</a>` : ''}
       </div>
     </div>
-    <hr class="divider" />
+    <div class="card-divider"></div>
     <div class="screenshots-wrap">
-      <div class="screenshots-label">Screenshots ${badgeHtml}</div>
+      <div class="screenshots-label">Screenshots ${badge}</div>
       ${shots.length
-        ? `<div class="screenshots">${shots.map(u => `<img class="screenshot" src="${u}" loading="lazy" onerror="this.style.display='none'" onclick="openLightbox('${u}')" />`).join('')}</div>`
-        : `<div class="no-shots">No screenshots could be retrieved for this app.</div>`}
+          ? `<div class="screenshots">${shots.map(u => `<img class="screenshot" src="${u}" loading="lazy" onerror="this.style.display='none'" onclick="openLightbox('${u}')"/>`).join('')}</div>`
+          : `<div class="no-shots">No screenshots could be retrieved for this app.</div>`}
     </div>
   </div>`;
-  }
-
-  function skeletonCard() {
-    return `<div class="app-card skel">
-    <div class="app-top">
-      <div style="width:64px;height:64px;border-radius:14px;background:var(--color-background-secondary);flex-shrink:0"></div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:7px;padding-top:4px">
-        <div class="skel-bar" style="height:14px;width:52%"></div>
-        <div class="skel-bar" style="height:12px;width:72%"></div>
-        <div class="skel-bar" style="height:11px;width:38%"></div>
-      </div>
-    </div>
-    <div style="padding:0 1.25rem 1rem;display:flex;gap:8px">
-      ${[1, 2, 3].map(() => `<div class="skel-bar" style="width:88px;height:160px;border-radius:10px;flex-shrink:0"></div>`).join('')}
-    </div>
-  </div>`;
-  }
-
-  function setDot(i, s) { const el = document.getElementById('dot-' + i); if (el) el.className = 'dot ' + s; }
-  function setLabel(i, t) { const el = document.getElementById('lbl-' + i); if (el) el.textContent = t; }
-
-  async function processApp(appId, idx) {
-    setLabel(idx, 'Fetching from iTunes API...');
-
-    const { app, shots: apiShots, source } = await tryItunes(appId);
-    if (!app) { setDot(idx, 'fail'); setLabel(idx, 'App not found'); return null; }
-
-    if (apiShots.length > 0) {
-      setDot(idx, 'done');
-      setLabel(idx, `${app.trackName} — ${apiShots.length} screenshots`);
-      return renderCard(app, apiShots, 'api');
     }
 
-    // Fallback: try CORS proxy first (faster), then AI
-    setLabel(idx, 'API had no screenshots — trying page scrape...');
-    let shots = await fetchShotsViaProxy(appId);
-    let finalSource = 'ai';
+    // ── Main fetch ───────────────────────────────────────────────────────────────
+    async function processApp(appId, idx) {
+      setLabel(idx, 'Fetching metadata...');
 
-    if (shots.length === 0) {
-      setLabel(idx, 'Proxy failed — using AI extraction...');
-      shots = await fetchShotsViaAI(appId);
+      const { app, shots: apiShots, source } = await tryItunes(appId);
+      if (!app) { setDot(idx, 'fail'); setLabel(idx, 'App not found'); return null; }
+
+      if (apiShots.length > 0) {
+        setDot(idx, 'done');
+        setLabel(idx, `${app.trackName} — ${apiShots.length} screenshots (API)`);
+        return renderCard(app, apiShots, 'api');
+      }
+
+      setLabel(idx, `${app.trackName} — scraping App Store page...`);
+      const pageShots = await fetchShotsViaPage(appId);
+
+      setDot(idx, pageShots.length > 0 ? 'done' : 'fail');
+      setLabel(idx, `${app.trackName} — ${pageShots.length > 0 ? pageShots.length + ' screenshots (page)' : 'no screenshots found'}`);
+      return renderCard(app, pageShots, pageShots.length > 0 ? 'page' : 'none');
     }
 
-    setDot(idx, 'done');
-    setLabel(idx, `${app.trackName} — ${shots.length > 0 ? shots.length + ' screenshots' : 'no screenshots found'}`);
-    return renderCard(app, shots, shots.length > 0 ? finalSource : 'none');
-  }
+    async function fetchApps() {
+      const raw = document.getElementById('urls').value.trim();
+      const results = document.getElementById('results');
+      const progressWrap = document.getElementById('progressWrap');
+      const btn = document.getElementById('fetchBtn');
+      const statusText = document.getElementById('statusText');
 
-  async function fetchApps() {
-    const raw = document.getElementById('urls').value.trim();
-    const results = document.getElementById('results');
-    const progressWrap = document.getElementById('progressWrap');
-    const btn = document.getElementById('fetchBtn');
+      const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+      if (!lines.length) return;
+      if (lines.length > 10) { alert('Max 10 URLs at a time.'); return; }
 
-    const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-    if (!lines.length) return;
-    if (lines.length > 10) { alert('Max 10 URLs.'); return; }
+      const ids = lines.map(l => extractId(l));
+      if (ids.some(id => !id)) { alert('One or more URLs are not valid App Store links.'); return; }
 
-    const ids = lines.map(l => extractId(l));
-    if (ids.some(id => !id)) { alert('One or more URLs are not valid App Store links.'); return; }
-
-    btn.disabled = true;
-    results.innerHTML = ids.map(() => skeletonCard()).join('');
-    progressWrap.innerHTML = ids.map((_, i) => `
+      btn.disabled = true;
+      statusText.textContent = '';
+      results.innerHTML = ids.map(() => skeletonCard()).join('');
+      progressWrap.innerHTML = ids.map((_, i) => `
     <div class="progress-item">
       <div class="dot active" id="dot-${i}"></div>
       <span id="lbl-${i}">Waiting...</span>
     </div>`).join('');
 
-    const cards = await Promise.all(ids.map((id, i) => processApp(id, i)));
-    results.innerHTML = cards.filter(Boolean).join('');
-    btn.disabled = false;
-  }
+      const cards = await Promise.all(ids.map((id, i) => processApp(id, i)));
+      const valid = cards.filter(Boolean);
+      results.innerHTML = valid.join('');
+      statusText.textContent = `Loaded ${valid.length} app${valid.length !== 1 ? 's' : ''}`;
+      btn.disabled = false;
+    }
 
-  function clearAll() {
-    document.getElementById('urls').value = '';
-    document.getElementById('results').innerHTML = '';
-    document.getElementById('progressWrap').innerHTML = '';
-  }
-  function openLightbox(src) {
-    document.getElementById('lb-img').src = src;
-    document.getElementById('lightbox').classList.add('open');
-  }
-  function closeLightbox() {
-    document.getElementById('lightbox').classList.remove('open');
-  }
-</script>
+    function clearAll() {
+      document.getElementById('urls').value = '';
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('progressWrap').innerHTML = '';
+      document.getElementById('statusText').textContent = '';
+    }
+    function openLightbox(src) {
+      document.getElementById('lbImg').src = src;
+      document.getElementById('lightbox').classList.add('open');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+  </script>
+</body>
+
+</html>
