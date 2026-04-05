@@ -566,10 +566,9 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
       }
 
       /* ── Step 2: scrape App Store page via proxy, apply srcset extractor ── */
-      async function fetchShotsViaPage(appId) {
-        var pageUrl = 'https://apps.apple.com/us/app/id' + appId;
+      async function fetchShotsViaPage(url) {
         try {
-          var r = await fetch(PROXY(pageUrl), { signal: AbortSignal.timeout(12000) });
+          var r = await fetch(PROXY(url), { signal: AbortSignal.timeout(12000) });
           if (!r.ok) return [];
           var html = await r.text();
           return extractImages(html);
@@ -630,28 +629,33 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           + '</div></div>';
       }
 
-      async function processApp(appId, idx) {
+      async function processApp(url, idx) {
+        var appId = extractId(url);
         setLabel(idx, 'Fetching metadata...');
         var result = await tryItunes(appId);
         var app = result.app;
-        var apiShots = result.shots;
+        var apiShots = result.shots || [];
 
         if (!app) { setDot(idx, 'fail'); setLabel(idx, 'App not found'); return null; }
 
+        setLabel(idx, app.trackName + ' — scraping App Store page...');
+        var pageShots = await fetchShotsViaPage(url);
+
+        if (pageShots.length > 0) {
+          setDot(idx, 'done');
+          setLabel(idx, app.trackName + ' — ' + pageShots.length + ' screenshots');
+          return renderCard(app, pageShots, 'page');
+        }
+
         if (apiShots.length > 0) {
           setDot(idx, 'done');
-          setLabel(idx, app.trackName + ' — ' + apiShots.length + ' screenshots (API)');
+          setLabel(idx, app.trackName + ' — ' + apiShots.length + ' screenshots');
           return renderCard(app, apiShots, 'api');
         }
 
-        setLabel(idx, app.trackName + ' — scraping App Store page...');
-        var pageShots = await fetchShotsViaPage(appId);
-
-        setDot(idx, pageShots.length > 0 ? 'done' : 'fail');
-        setLabel(idx, app.trackName + ' — ' + (pageShots.length > 0
-          ? pageShots.length + ' screenshots (page)'
-          : 'no screenshots found'));
-        return renderCard(app, pageShots, pageShots.length > 0 ? 'page' : 'none');
+        setDot(idx, 'fail');
+        setLabel(idx, app.trackName + ' — no screenshots found');
+        return renderCard(app, [], 'none');
       }
 
       /* ── Globals for onclick handlers ── */
@@ -679,7 +683,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           return '<div class="progress-item"><div class="dot active" id="dot-' + i + '"></div><span id="lbl-' + i + '">Waiting...</span></div>';
         }).join('');
 
-        var cards = await Promise.all(ids.map(function (id, i) { return processApp(id, i); }));
+        var cards = await Promise.all(lines.map(function (url, i) { return processApp(url, i); }));
         var valid = cards.filter(Boolean);
         results.innerHTML = valid.join('');
         statusText.textContent = 'Loaded ' + valid.length + ' app' + (valid.length !== 1 ? 's' : '');
