@@ -495,27 +495,44 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         u = u.trim();
         return u.startsWith('//') ? 'https:' + u : u;
       }
-      function isClean1024(u) {
-        if (!u.endsWith('/1024x1024bb.webp')) return false;
-        var m = u.match(/\d+x\d+bb/g);
-        return m && m.length === 1;
-      }
-      function extractUniqueClean1024(html) {
+      function extractImages(html) {
         var parser = new DOMParser();
         var doc = parser.parseFromString(html, 'text/html');
         var map = new Map();
+
         doc.querySelectorAll('[srcset]').forEach(function (el) {
           var srcset = el.getAttribute('srcset') || '';
+          var best = null;
+
           srcset.split(',').forEach(function (item) {
             var parts = item.trim().split(/\s+/);
             var url = normalizeUrl(parts[0]);
-            if (!url || !isClean1024(url)) return;
-            var m = url.match(/(.+\.jpg)/);
-            var key = m ? m[1] : url;
-            if (!map.has(key)) map.set(key, url);
+            var descriptor = parts[1] || '';
+
+            var score = 0;
+            if (descriptor.endsWith('w')) score = parseInt(descriptor, 10);
+            else if (descriptor.endsWith('x')) score = parseFloat(descriptor) * 1000;
+
+            if (!best || score > best.score) {
+              best = { url: url, score: score };
+            }
           });
+
+          if (best && best.url) {
+            // Filter out App Icons and purely generic images to only get screenshots
+            if (best.url.indexOf('AppIcon') !== -1 || best.url.indexOf('Features') !== -1) return;
+
+            var match = best.url.match(/(.+\.jpg|.+\.png)/i);
+            if (match) {
+              var key = match[1];
+              if (!map.has(key) || best.score > map.get(key).score) {
+                map.set(key, best);
+              }
+            }
+          }
         });
-        return Array.from(map.values());
+
+        return Array.from(map.values()).map(function(item) { return item.url; }).slice(0, 15);
       }
 
       /* ── Step 1: iTunes API via proxy ── */
@@ -545,7 +562,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           var r = await fetch(PROXY(pageUrl), { signal: AbortSignal.timeout(12000) });
           if (!r.ok) return [];
           var html = await r.text();
-          return extractUniqueClean1024(html);
+          return extractImages(html);
         } catch (e) { return []; }
       }
 
