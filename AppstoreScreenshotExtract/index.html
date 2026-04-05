@@ -351,7 +351,7 @@
 
     .screenshots {
       display: flex;
-      gap: 8px;
+      gap: 12px;
       overflow-x: auto;
       padding-bottom: 12px
     }
@@ -376,7 +376,7 @@
     }
 
     .screenshot {
-      height: 168px;
+      height: 280px;
       border-radius: 10px;
       border: 1px solid var(--border);
       flex-shrink: 0;
@@ -581,7 +581,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
 
       function skeletonCard() {
         var cols = [0, 1, 2].map(function () {
-          return '<div class="skel-block" style="width:86px;height:168px;border-radius:10px;flex-shrink:0"></div>';
+          return '<div class="skel-block" style="width:144px;height:280px;border-radius:10px;flex-shrink:0"></div>';
         }).join('');
         return '<div class="app-card skel">'
           + '<div class="app-top">'
