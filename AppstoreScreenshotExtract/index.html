@@ -90,7 +90,7 @@
     }
 
     .header {
-      padding: 48px clamp(16px, 3vw, 48px) 32px;
+      padding: 72px clamp(16px, 3vw, 48px) 32px;
     }
 
     .header-eyebrow {
@@ -191,9 +191,14 @@
     }
 
     .btn.primary {
-      background: var(--text);
+      background: #2d5be3;
       color: #fff;
       border-color: transparent
+    }
+
+    body.dark .btn.primary {
+      background: #5b8af5;
+      color: #0d1117
     }
 
     .btn.primary:hover {
@@ -565,8 +570,8 @@
 
   <div class="header">
     <div class="header-eyebrow">Tool</div>
-    <h1><strong>App Store</strong><br />Preview</h1>
-    <p>Paste up to 10 App Store URLs and instantly see name, subtitle &amp; screenshots side by side.</p>
+    <h1><strong>App Store</strong> Preview</h1>
+    <p>Paste up to 15 App Store URLs and instantly see name, subtitle &amp; screenshots side by side.</p>
   </div>
 
   <div class="input-section">
@@ -814,7 +819,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
 
         var lines = raw.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
         if (!lines.length) return;
-        if (lines.length > 10) { alert('Max 10 URLs at a time.'); return; }
+        if (lines.length > 15) { alert('Max 15 URLs at a time.'); return; }
 
         var ids = lines.map(extractId);
         if (ids.some(function (id) { return !id; })) {
