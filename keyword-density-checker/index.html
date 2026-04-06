@@ -492,6 +492,29 @@
         .logout-btn:hover {
             background: rgba(255, 255, 255, 0.3);
         }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-3px);
+        }
     </style>
 </head>
 <body>
@@ -502,7 +525,8 @@
     </div>
 
     <div id="mainContent" style="display: none;">
-    <div class="container">
+    <div class="container" style="position: relative;">
+        <a href="../" class="back-btn">⬅ Back to Tools</a>
         <div class="header">
             <h1>Keyword Density Checker</h1>
             <p>Analyze your text and discover keyword patterns with precision</p>

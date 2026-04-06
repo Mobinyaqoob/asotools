@@ -4,7 +4,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simple Button Page</title>
+  <title>ASO Tools Dashboard</title>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -34,21 +38,151 @@
       transform: scale(1.05);
       background: linear-gradient(135deg, #5a4acb, #7266ff);
     }
+
+    /* Auth Styles */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(102, 126, 234, 0.95);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      color: white;
+      font-size: 1.2rem;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .auth-spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-right: 20px;
+    }
+
+    .auth-info {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 12px 24px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .user-email {
+      font-size: 1rem;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .logout-btn {
+      background: white;
+      border: 1px solid #ddd;
+      color: #e74c3c;
+      padding: 6px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      width: auto;
+      margin: 0;
+      box-shadow: none;
+    }
+
+    .logout-btn:hover {
+      background: #fdf2f2;
+      border-color: #e74c3c;
+      transform: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 
 <body>
-  <h1 style="font-size:40px; margin-bottom:30px; color:#333; text-shadow:2px 2px 5px rgba(0,0,0,0.2);">ASO Tool</h1>
-  <button onclick="window.location.href='https://mobinyaqoob.github.io/asotools/DuplicateLineRemover/'">Duplicate Line
-    Remover</button>
-  <button onclick="window.location.href='https://mobinyaqoob.github.io/asotools/image-optimize/'">Image
-    Optimize</button>
-  <button onclick="window.location.href='https://mobinyaqoob.github.io/asotools/keyword-density-checker/'">Keyword
-    Density Checker</button>
-  <button onclick="window.location.href='https://mobinyaqoob.github.io/asotools/title_combination/'">Title
-    Combination</button>
-  <button onclick="window.location.href='https://mobinyaqoob.github.io/asotools/AppstoreScreenshotExtract/'">Appstore
-    Screenshot Extractor</button>
+  <!-- Loading screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="auth-spinner"></div>
+    <div>Checking authentication...</div>
+  </div>
+
+  <div id="mainContent" style="display: none; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <h1 style="font-size:48px; margin-bottom:10px; color:#333; text-shadow:2px 2px 5px rgba(0,0,0,0.1); font-weight: 700;">ASO Tools</h1>
+    <p style="color: #666; margin-bottom: 30px; font-size: 1.1rem;">Professional App Store Optimization Suite</p>
+    
+    <div id="userInfo"></div>
+
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <button onclick="window.location.href='./DuplicateLineRemover/'">Duplicate Line Remover</button>
+      <button onclick="window.location.href='./image-optimize/'">Image Optimize</button>
+      <button onclick="window.location.href='./keyword-density-checker/'">Keyword Density Checker</button>
+      <button onclick="window.location.href='./title_combination/'">Title Combination</button>
+      <button onclick="window.location.href='./AppstoreScreenshotExtract/'">Appstore Screenshot Extractor</button>
+    </div>
+  </div>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
+      authDomain: "asotools-auth.firebaseapp.com",
+      projectId: "asotools-auth",
+      storageBucket: "asotools-auth.firebasestorage.app",
+      messagingSenderId: "673087191334",
+      appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
+      measurementId: "G-TC77Q0EMBJ"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Authentication state observer
+    auth.onAuthStateChanged((user) => {
+      const loadingScreen = document.getElementById('loadingScreen');
+      const mainContent = document.getElementById('mainContent');
+
+      if (user) {
+        // User is signed in
+        loadingScreen.style.display = 'none';
+        mainContent.style.display = 'flex';
+        updateUserInfo(user);
+      } else {
+        // Not authenticated
+        window.location.href = './login/';
+      }
+    });
+
+    function updateUserInfo(user) {
+      const userInfo = document.getElementById('userInfo');
+      if (userInfo) {
+        userInfo.innerHTML = `
+          <div class="auth-info">
+            <span class="user-email">Logged in as: <strong>${user.email}</strong></span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+          </div>
+        `;
+      }
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = './login/';
+      });
+    }
+  </script>
 </body>
 
 </html>

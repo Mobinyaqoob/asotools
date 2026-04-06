@@ -141,14 +141,7 @@
 
         signInWithEmailAndPassword(auth, email, password)
           .then(() => {
-            // Check if there's a redirect URL in the URL parameters or session storage
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirectTo = urlParams.get('redirect') || sessionStorage.getItem('redirectAfterLogin') || '../';
-
-            // Clear the stored redirect
-            sessionStorage.removeItem('redirectAfterLogin');
-
-            window.location.href = redirectTo;
+            window.location.href = '../';
           })
           .catch(error => {
             // Handle specific Firebase auth errors
