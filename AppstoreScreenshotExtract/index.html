@@ -505,12 +505,24 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         u = u.trim();
         return u.startsWith('//') ? 'https:' + u : u;
       }
-      function extractImages(html) {
+      function extractImages(html, isMacApp) {
         var parser = new DOMParser();
         var doc = parser.parseFromString(html, 'text/html');
         var map = new Map();
 
-        doc.querySelectorAll('[srcset]').forEach(function (el) {
+        // Scope to the exact relevant platform section so iPhone and Mac screenshots do NOT mix
+        var section = null;
+        if (isMacApp) {
+          section = doc.querySelector('#product_media_mac_');
+        } else {
+          section = doc.querySelector('#product_media_phone_');
+          if (!section) section = doc.querySelector('#product_media_pad_');
+        }
+
+        // If a specialized section exists, query inside it. Otherwise fallback to the whole page.
+        var elements = section ? section.querySelectorAll('[srcset]') : doc.querySelectorAll('[srcset]');
+
+        elements.forEach(function (el) {
           var srcset = el.getAttribute('srcset') || '';
           var best = null;
 
@@ -580,12 +592,12 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
       }
 
       /* ── Step 2: scrape App Store page via proxy, apply srcset extractor ── */
-      async function fetchShotsViaPage(url) {
+      async function fetchShotsViaPage(url, isMacApp) {
         try {
           var r = await fetch(PROXY(url), { signal: AbortSignal.timeout(12000) });
           if (!r.ok) return [];
           var html = await r.text();
-          return extractImages(html);
+          return extractImages(html, isMacApp);
         } catch (e) { return []; }
       }
 
@@ -656,10 +668,14 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         var app = result.app;
         var apiShots = result.shots || [];
 
+        var isMacApp = (app && app.kind === 'mac-software') || 
+                       (app && app.trackViewUrl && app.trackViewUrl.indexOf('mt=12') !== -1) ||
+                       (url.indexOf('mt=12') !== -1);
+
         if (!app) { setDot(idx, 'fail'); setLabel(idx, 'App not found'); return null; }
 
         setLabel(idx, app.trackName + ' — scraping App Store page...');
-        var pageShots = await fetchShotsViaPage(url);
+        var pageShots = await fetchShotsViaPage(url, isMacApp);
 
         if (pageShots.length > 0) {
           setDot(idx, 'done');
