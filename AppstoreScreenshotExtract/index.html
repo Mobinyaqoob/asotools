@@ -44,9 +44,7 @@
     }
 
     .header {
-      padding: 48px 24px 32px;
-      max-width: 1080px;
-      margin: 0 auto
+      padding: 48px clamp(16px, 3vw, 48px) 32px;
     }
 
     .header-eyebrow {
@@ -77,9 +75,7 @@
     }
 
     .input-section {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 0 24px
+      padding: 0 clamp(16px, 3vw, 48px);
     }
 
     .input-card {
@@ -165,9 +161,8 @@
     }
 
     .progress-wrap {
-      max-width: 1080px;
-      margin: 16px auto 0;
-      padding: 0 24px;
+      margin: 16px 0 0;
+      padding: 0 clamp(16px, 3vw, 48px);
       display: flex;
       flex-direction: column;
       gap: 5px
@@ -216,9 +211,8 @@
     }
 
     .results {
-      max-width: 1080px;
-      margin: 24px auto 0;
-      padding: 0 24px;
+      margin: 24px 0 0;
+      padding: 0 clamp(16px, 3vw, 48px);
       display: flex;
       flex-direction: column;
       gap: 16px
@@ -376,13 +370,38 @@
     }
 
     .screenshot {
-      height: 440px;
+      height: clamp(200px, 38vh, 520px);
       border-radius: 12px;
       border: 1px solid var(--border);
       flex-shrink: 0;
       object-fit: cover;
       cursor: zoom-in;
       transition: opacity .15s, transform .15s
+    }
+
+    @media (max-width: 600px) {
+      .app-top {
+        flex-wrap: wrap;
+        gap: 10px
+      }
+
+      .app-icon {
+        width: 52px;
+        height: 52px
+      }
+
+      .app-name {
+        font-size: 15px
+      }
+
+      .header h1 {
+        font-size: clamp(22px, 6vw, 32px)
+      }
+
+      .btn {
+        padding: 8px 14px;
+        font-size: 13px
+      }
     }
 
     .screenshot:hover {
