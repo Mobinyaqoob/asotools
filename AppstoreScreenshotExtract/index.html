@@ -529,33 +529,25 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           });
 
           if (best && best.url) {
-            // Filter out App Icons and purely generic images to only get screenshots
-            if (best.url.indexOf('AppIcon') !== -1 || best.url.indexOf('Features') !== -1) return;
-
-            // Extract the original upload filename used as a directory by Apple's CDN (e.g., .../1.jpg/...)
-            // This prevents grouping same images with different resolutions dynamically 
-            var match = best.url.match(/\/([^\/]+\.(?:jpg|png|jpeg))\//i);
-            if (match) {
-              var key = match[1];
-              
-              // Only include files that contain digits (like 1.jpg, 2.png) 
-              // as this filters out generic icons and subscription images.
-              if (/\d/.test(key)) {
-                
-                // Exclude if the URL indicates dimensions smaller than 500x500
-                var dimMatch = best.url.match(/(\d+)x(\d+)/i);
-                if (dimMatch) {
-                  var w = parseInt(dimMatch[1], 10);
-                  var h = parseInt(dimMatch[2], 10);
-                  if (w < 500 && h < 500) {
-                    return; // Skip if BOTH width and height are less than 500
-                  }
-                }
-
-                if (!map.has(key) || best.score > map.get(key).score) {
-                  map.set(key, best);
-                }
+            // 1. No less than 500x500 size
+            // Exclude if the URL indicates dimensions smaller than 500x500
+            var dimMatch = best.url.match(/(\d+)x(\d+)/i);
+            if (dimMatch) {
+              var w = parseInt(dimMatch[1], 10);
+              var h = parseInt(dimMatch[2], 10);
+              if (w < 500 && h < 500) {
+                return; // Skip if BOTH width and height are less than 500
               }
+            }
+
+            // 2. No repeated
+            // Extract the original upload filename used as a directory by Apple's CDN (e.g., .../1.jpg/...)
+            // If it can't find one, it safely falls back to the full URL so no images are lost
+            var fileMatch = best.url.match(/\/([^\/]+\.(?:jpg|png|jpeg|webp))\//i);
+            var key = fileMatch ? fileMatch[1] : best.url;
+
+            if (!map.has(key) || best.score > map.get(key).score) {
+              map.set(key, best);
             }
           }
         });
