@@ -560,6 +560,46 @@
       0%, 100% { opacity: 1; }
       50% { opacity: .3; }
     }
+    
+    .auth-info {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 10px 16px;
+      border-radius: 10px;
+      margin-top: 16px;
+      display: inline-flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      color: #fff;
+    }
+
+    body.dark .auth-info {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .user-email {
+      font-size: 13.5px;
+      opacity: 0.9;
+    }
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13.5px;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
     .loading-screen {
       position: fixed;
       top: 0;
@@ -687,6 +727,7 @@
     <div class="header-eyebrow">Tool</div>
     <h1><strong>App Store</strong> Preview</h1>
     <p>Paste up to 15 App Store URLs and instantly see name, subtitle &amp; screenshots side by side.</p>
+    <div id="userInfo"></div>
   </div>
 
   <div class="input-section">
@@ -1028,6 +1069,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         // User is signed in — show the app
         loadingScreen.style.display = 'none';
         mainContent.style.display = 'block';
+        updateUserInfo(user);
       } else {
         // Not authenticated — redirect to login
         mainContent.style.display = 'none';
@@ -1038,6 +1080,22 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         }, 1000);
       }
     });
+
+    function updateUserInfo(user) {
+        const userInfo = document.getElementById('userInfo');
+        if (userInfo) {
+            userInfo.innerHTML = `
+                <div class="auth-info">
+                    <span class="user-email">Welcome, ${user.email}</span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            `;
+        }
+    }
+
+    function logout() {
+        auth.signOut();
+    }
   </script>
 
 </body>
