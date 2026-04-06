@@ -505,7 +505,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         u = u.trim();
         return u.startsWith('//') ? 'https:' + u : u;
       }
-      function extractImages(html, isMacApp) {
+      function extractImages(html, isMacApp, isIpadApp) {
         var parser = new DOMParser();
         var doc = parser.parseFromString(html, 'text/html');
         var map = new Map();
@@ -514,6 +514,8 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         var section = null;
         if (isMacApp) {
           section = doc.querySelector('#product_media_mac_');
+        } else if (isIpadApp) {
+          section = doc.querySelector('#product_media_pad_');
         } else {
           section = doc.querySelector('#product_media_phone_');
           if (!section) section = doc.querySelector('#product_media_pad_');
@@ -596,12 +598,12 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
       }
 
       /* ── Step 2: scrape App Store page via proxy, apply srcset extractor ── */
-      async function fetchShotsViaPage(url, isMacApp) {
+      async function fetchShotsViaPage(url, isMacApp, isIpadApp) {
         try {
           var r = await fetch(PROXY(url), { signal: AbortSignal.timeout(12000) });
           if (!r.ok) return [];
           var html = await r.text();
-          return extractImages(html, isMacApp);
+          return extractImages(html, isMacApp, isIpadApp);
         } catch (e) { return []; }
       }
 
@@ -670,27 +672,59 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         setLabel(idx, 'Fetching metadata...');
         var result = await tryItunes(appId);
         var app = result.app;
-        var apiShots = result.shots || [];
 
         var isMacApp = (app && app.kind === 'mac-software') || 
                        (app && app.trackViewUrl && app.trackViewUrl.indexOf('mt=12') !== -1) ||
-                       (url.indexOf('mt=12') !== -1);
+                       (url.indexOf('mt=12') !== -1) || (url.indexOf('platform=mac') !== -1);
+        var isIpadApp = url.indexOf('platform=ipad') !== -1;
+
+        var apiShots = [];
+        if (app) {
+          if (isMacApp && app.macScreenshotUrls && app.macScreenshotUrls.length > 0) {
+            apiShots = app.macScreenshotUrls;
+          } else if (isIpadApp && app.ipadScreenshotUrls && app.ipadScreenshotUrls.length > 0) {
+            apiShots = app.ipadScreenshotUrls;
+          } else if (app.screenshotUrls && app.screenshotUrls.length > 0) {
+            apiShots = app.screenshotUrls;
+          } else if (app.ipadScreenshotUrls && app.ipadScreenshotUrls.length > 0) {
+            apiShots = app.ipadScreenshotUrls;
+          }
+        }
 
         if (!app) { setDot(idx, 'fail'); setLabel(idx, 'App not found'); return null; }
 
         setLabel(idx, app.trackName + ' — scraping App Store page...');
-        var pageShots = await fetchShotsViaPage(url, isMacApp);
+        var pageShots = await fetchShotsViaPage(url, isMacApp, isIpadApp);
 
-        if (pageShots.length > 0) {
-          setDot(idx, 'done');
-          setLabel(idx, app.trackName + ' — ' + pageShots.length + ' screenshots');
-          return renderCard(app, pageShots, 'page', url);
+        // Apple HTML lazily loads screenshots, meaning pageShots may only have 6 when there are 8.
+        // We merge apiShots (the full list) with pageShots (which might have better webp quality).
+        var finalMap = new Map();
+
+        // 1. Add API shots for guaranteed full count
+        if (apiShots) {
+           apiShots.forEach(function(u) {
+               var m = u.match(/\/([^\/]+\/[^\/]+\.(?:jpg|png|jpeg|webp))/i);
+               var key = m ? m[1] : u;
+               finalMap.set(key, u);
+           });
         }
 
-        if (apiShots.length > 0) {
+        // 2. Add Page shots, replacing lower quality API shots
+        if (pageShots) {
+           pageShots.forEach(function(u) {
+               var m = u.match(/\/([^\/]+\/[^\/]+\.(?:jpg|png|jpeg|webp))/i);
+               var key = m ? m[1] : u;
+               finalMap.set(key, u);
+           });
+        }
+
+        var finalShots = Array.from(finalMap.values());
+        var source = pageShots.length > 0 ? 'page+api' : (apiShots.length > 0 ? 'api' : 'none');
+
+        if (finalShots.length > 0) {
           setDot(idx, 'done');
-          setLabel(idx, app.trackName + ' — ' + apiShots.length + ' screenshots');
-          return renderCard(app, apiShots, 'api', url);
+          setLabel(idx, app.trackName + ' — ' + finalShots.length + ' screenshots');
+          return renderCard(app, finalShots, source, url);
         }
 
         setDot(idx, 'fail');
