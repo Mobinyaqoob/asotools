@@ -556,6 +556,77 @@
       0%, 100% { opacity: 1; }
       50% { opacity: .3; }
     }
+    @media print {
+      /* Hide all UI chrome */
+      .header, .input-section, .progress-wrap,
+      .branch-badge, .theme-toggle, .lightbox,
+      .app-link, .screenshots-label { display: none !important; }
+
+      /* Reset page */
+      body {
+        background: #fff !important;
+        color: #111 !important;
+        padding: 0 !important;
+        font-family: 'DM Sans', sans-serif;
+      }
+
+      .results {
+        margin: 0 !important;
+        padding: 16px !important;
+        gap: 24px !important;
+      }
+
+      .app-card {
+        border: 1px solid #ddd !important;
+        border-radius: 10px !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        overflow: visible !important;
+        background: #fff !important;
+      }
+
+      .app-top {
+        padding: 12px 14px 8px !important;
+      }
+
+      .app-icon {
+        width: 48px !important;
+        height: 48px !important;
+      }
+
+      .app-name {
+        font-size: 14px !important;
+        color: #111 !important;
+      }
+
+      .app-subtitle, .app-dev, .app-rating {
+        color: #555 !important;
+      }
+
+      .card-divider {
+        background: #eee !important;
+      }
+
+      .screenshots-wrap {
+        padding: 10px 14px 14px !important;
+      }
+
+      .screenshots {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        overflow: visible !important;
+        padding: 0 !important;
+      }
+
+      .screenshot {
+        height: 180px !important;
+        width: auto !important;
+        border-radius: 6px !important;
+        border: 1px solid #ddd !important;
+        flex-shrink: 0 !important;
+      }
+    }
   </style>
 </head>
 
@@ -582,6 +653,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
       <div class="controls">
         <button class="btn primary" id="fetchBtn" onclick="window.fetchApps()">Fetch apps</button>
         <button class="btn" onclick="window.clearAll()">Clear</button>
+        <button class="btn" id="downloadBtn" onclick="window.downloadPDF()" style="display:none">⬇ Download PDF</button>
         <span class="status-text" id="statusText"></span>
       </div>
     </div>
@@ -838,6 +910,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         var valid = cards.filter(Boolean);
         results.innerHTML = valid.join('');
         statusText.textContent = 'Loaded ' + valid.length + ' app' + (valid.length !== 1 ? 's' : '');
+        document.getElementById('downloadBtn').style.display = valid.length > 0 ? '' : 'none';
         btn.disabled = false;
       };
 
@@ -846,6 +919,11 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         document.getElementById('results').innerHTML = '';
         document.getElementById('progressWrap').innerHTML = '';
         document.getElementById('statusText').textContent = '';
+        document.getElementById('downloadBtn').style.display = 'none';
+      };
+
+      window.downloadPDF = function () {
+        window.print();
       };
 
       window.openLightbox = function (src) {
