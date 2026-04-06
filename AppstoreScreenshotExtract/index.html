@@ -520,7 +520,14 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         }
 
         // If a specialized section exists, query inside it. Otherwise fallback to the whole page.
-        var elements = section ? section.querySelectorAll('[srcset]') : doc.querySelectorAll('[srcset]');
+        var selector = 'div[aria-label="Screenshot"] [srcset], .we-screenshot-viewer__screenshot [srcset]';
+        var elements = section ? section.querySelectorAll(selector) : doc.querySelectorAll(selector);
+        
+        // Fallback to all srcset elements if the precise selectors didn't find anything 
+        // (to future-proof against App Store DOM structure changes)
+        if (elements.length === 0) {
+            elements = section ? section.querySelectorAll('[srcset]') : doc.querySelectorAll('[srcset]');
+        }
 
         elements.forEach(function (el) {
           var srcset = el.getAttribute('srcset') || '';
