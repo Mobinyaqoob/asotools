@@ -529,21 +529,25 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           });
 
           if (best && best.url) {
+            // Restore filtering of generic Apple assets (Icons, Feature graphics, Placeholders)
+            if (best.url.indexOf('AppIcon') !== -1 || best.url.indexOf('Features') !== -1 || best.url.indexOf('Placeholder') !== -1) return;
+
             // 1. No less than 500x500 size
-            // Exclude if the URL indicates dimensions smaller than 500x500
+            // Exclude if BOTH dimensions are smaller than 500 (ignoring '0' which means auto-scale)
             var dimMatch = best.url.match(/(\d+)x(\d+)/i);
             if (dimMatch) {
               var w = parseInt(dimMatch[1], 10);
               var h = parseInt(dimMatch[2], 10);
-              if (w < 500 && h < 500) {
-                return; // Skip if BOTH width and height are less than 500
+              if (w > 0 && h > 0 && w < 500 && h < 500) {
+                return; // Skip if BOTH width and height are strictly less than 500
               }
             }
 
             // 2. No repeated
-            // Extract the original upload filename used as a directory by Apple's CDN (e.g., .../1.jpg/...)
-            // If it can't find one, it safely falls back to the full URL so no images are lost
-            var fileMatch = best.url.match(/\/([^\/]+\.(?:jpg|png|jpeg|webp))\//i);
+            // Extract the unique folder ID + filename (e.g., .../8bb78254-b073.../1.jpg/...)
+            // This properly deduplicates different resolutions of the EXACT same image, 
+            // without merging different screenshots that happen to be named '1.jpg'
+            var fileMatch = best.url.match(/\/([^\/]+\/[^\/]+\.(?:jpg|png|jpeg|webp))\//i);
             var key = fileMatch ? fileMatch[1] : best.url;
 
             if (!map.has(key) || best.score > map.get(key).score) {
