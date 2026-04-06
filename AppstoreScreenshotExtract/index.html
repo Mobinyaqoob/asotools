@@ -612,7 +612,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           + '</div>';
       }
 
-      function renderCard(app, shots, source) {
+      function renderCard(app, shots, source, originalUrl) {
         var icon = app.artworkUrl512 || app.artworkUrl100 || app.artworkUrl60 || '';
         var rating = app.averageUserRating;
         var ratingCount = app.userRatingCount;
@@ -629,7 +629,11 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           }).join('') + '</div>'
           : '<div class="no-shots">No screenshots could be retrieved for this app.</div>';
 
-        var storeName = (app.kind === 'mac-software' || (app.trackViewUrl && app.trackViewUrl.indexOf('mt=12') !== -1)) ? 'Mac App Store' : 'App Store';
+        var isMacApp = app.kind === 'mac-software' || 
+          (app.trackViewUrl && app.trackViewUrl.indexOf('mt=12') !== -1) ||
+          (originalUrl && originalUrl.indexOf('mt=12') !== -1);
+        var storeName = isMacApp ? 'Mac App Store' : 'App Store';
+        var linkUrl = originalUrl || app.trackViewUrl;
 
         return '<div class="app-card">'
           + '<div class="app-top">'
@@ -640,7 +644,7 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           + (app.artistName ? '<div class="app-dev">by ' + app.artistName + '</div>' : '')
           + (rating ? '<div class="app-rating"><span class="stars">' + starsHtml(rating) + '</span>'
             + rating.toFixed(1) + (ratingCount ? ' &middot; ' + ratingCount.toLocaleString() + ' ratings' : '') + '</div>' : '')
-          + (app.trackViewUrl ? '<a class="app-link" href="' + app.trackViewUrl + '" target="_blank" rel="noopener">View on ' + storeName + ' ↗</a>' : '')
+          + (linkUrl ? '<a class="app-link" href="' + linkUrl + '" target="_blank" rel="noopener">View on ' + storeName + ' ↗</a>' : '')
           + '</div></div>'
           + '<div class="card-divider"></div>'
           + '<div class="screenshots-wrap">'
@@ -664,18 +668,18 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         if (pageShots.length > 0) {
           setDot(idx, 'done');
           setLabel(idx, app.trackName + ' — ' + pageShots.length + ' screenshots');
-          return renderCard(app, pageShots, 'page');
+          return renderCard(app, pageShots, 'page', url);
         }
 
         if (apiShots.length > 0) {
           setDot(idx, 'done');
           setLabel(idx, app.trackName + ' — ' + apiShots.length + ' screenshots');
-          return renderCard(app, apiShots, 'api');
+          return renderCard(app, apiShots, 'api', url);
         }
 
         setDot(idx, 'fail');
         setLabel(idx, app.trackName + ' — no screenshots found');
-        return renderCard(app, [], 'none');
+        return renderCard(app, [], 'none', url);
       }
 
       /* ── Globals for onclick handlers ── */
