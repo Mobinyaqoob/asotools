@@ -505,31 +505,12 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         u = u.trim();
         return u.startsWith('//') ? 'https:' + u : u;
       }
-      function extractImages(html, isMacApp, isIpadApp) {
+      function extractImages(html) {
         var parser = new DOMParser();
         var doc = parser.parseFromString(html, 'text/html');
-        var map = new Map();
+        var results = [];
 
-        // Scope to the exact relevant platform section so iPhone and Mac screenshots do NOT mix
-        var section = null;
-        if (isMacApp) {
-          section = doc.querySelector('#product_media_mac_');
-        } else if (isIpadApp) {
-          section = doc.querySelector('#product_media_pad_');
-        } else {
-          section = doc.querySelector('#product_media_phone_');
-          if (!section) section = doc.querySelector('#product_media_pad_');
-        }
-
-        // If a specialized section exists, query inside it. Otherwise fallback to the whole page.
-        var selector = 'div[aria-label="Screenshot"] [srcset], .we-screenshot-viewer__screenshot [srcset]';
-        var elements = section ? section.querySelectorAll(selector) : doc.querySelectorAll(selector);
-        
-        // Fallback to all srcset elements if the precise selectors didn't find anything 
-        // (to future-proof against App Store DOM structure changes)
-        if (elements.length === 0) {
-            elements = section ? section.querySelectorAll('[srcset]') : doc.querySelectorAll('[srcset]');
-        }
+        var elements = doc.querySelectorAll('[srcset]');
 
         elements.forEach(function (el) {
           var srcset = el.getAttribute('srcset') || '';
@@ -550,31 +531,11 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           });
 
           if (best && best.url) {
-            // 1. No less than 500x500 size
-            // Exclude if BOTH dimensions are smaller than 500 (ignoring '0' which means auto-scale)
-            var dimMatch = best.url.match(/(\d+)x(\d+)/i);
-            if (dimMatch) {
-              var w = parseInt(dimMatch[1], 10);
-              var h = parseInt(dimMatch[2], 10);
-              if (w > 0 && h > 0 && w < 500 && h < 500) {
-                return; // Skip if BOTH width and height are strictly less than 500
-              }
-            }
-
-            // 2. No repeated
-            // Extract the unique folder ID + filename (e.g., .../8bb78254-b073.../1.jpg/...)
-            // This properly deduplicates different resolutions of the EXACT same image, 
-            // without merging different screenshots that happen to be named '1.jpg'
-            var fileMatch = best.url.match(/\/([^\/]+\/[^\/]+\.(?:jpg|png|jpeg|webp))\//i);
-            var key = fileMatch ? fileMatch[1] : best.url;
-
-            if (!map.has(key) || best.score > map.get(key).score) {
-              map.set(key, best);
-            }
+            results.push(best.url);
           }
         });
 
-        return Array.from(map.values()).map(function(item) { return item.url; }).slice(0, 15);
+        return results;
       }
 
       /* ── Step 1: iTunes API via proxy ── */
@@ -598,12 +559,12 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
       }
 
       /* ── Step 2: scrape App Store page via proxy, apply srcset extractor ── */
-      async function fetchShotsViaPage(url, isMacApp, isIpadApp) {
+      async function fetchShotsViaPage(url) {
         try {
           var r = await fetch(PROXY(url), { signal: AbortSignal.timeout(12000) });
           if (!r.ok) return [];
           var html = await r.text();
-          return extractImages(html, isMacApp, isIpadApp);
+          return extractImages(html);
         } catch (e) { return []; }
       }
 
@@ -694,31 +655,13 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
         if (!app) { setDot(idx, 'fail'); setLabel(idx, 'App not found'); return null; }
 
         setLabel(idx, app.trackName + ' — scraping App Store page...');
-        var pageShots = await fetchShotsViaPage(url, isMacApp, isIpadApp);
+        var pageShots = await fetchShotsViaPage(url);
 
-        // Apple HTML lazily loads screenshots, meaning pageShots may only have 6 when there are 8.
-        // We merge apiShots (the full list) with pageShots (which might have better webp quality).
-        var finalMap = new Map();
+        // Just combine all URLs without any filtering 
+        var finalShots = [];
+        if (apiShots) finalShots = finalShots.concat(apiShots);
+        if (pageShots) finalShots = finalShots.concat(pageShots);
 
-        // 1. Add API shots for guaranteed full count
-        if (apiShots) {
-           apiShots.forEach(function(u) {
-               var m = u.match(/\/([^\/]+\/[^\/]+\.(?:jpg|png|jpeg|webp))/i);
-               var key = m ? m[1] : u;
-               finalMap.set(key, u);
-           });
-        }
-
-        // 2. Add Page shots, replacing lower quality API shots
-        if (pageShots) {
-           pageShots.forEach(function(u) {
-               var m = u.match(/\/([^\/]+\/[^\/]+\.(?:jpg|png|jpeg|webp))/i);
-               var key = m ? m[1] : u;
-               finalMap.set(key, u);
-           });
-        }
-
-        var finalShots = Array.from(finalMap.values());
         var source = pageShots.length > 0 ? 'page+api' : (apiShots.length > 0 ? 'api' : 'none');
 
         if (finalShots.length > 0) {
