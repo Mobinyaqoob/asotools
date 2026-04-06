@@ -602,26 +602,28 @@
 
     .back-btn {
       position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 8px;
+      top: 14px;
+      left: 70px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      padding: 7px 16px;
+      border-radius: 20px;
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 13px;
       font-weight: 500;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       gap: 8px;
-      z-index: 100;
+      z-index: 1001;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
     }
 
     .back-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: var(--surface2);
       transform: translateX(-3px);
+      color: var(--text);
     }
 
     .loading-screen {
