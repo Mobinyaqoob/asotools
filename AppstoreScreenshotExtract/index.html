@@ -548,9 +548,6 @@ https://apps.apple.com/us/app/things-3/id904237743"></textarea>
           });
 
           if (best && best.url) {
-            // Restore filtering of generic Apple assets (Icons, Feature graphics, Placeholders)
-            if (best.url.indexOf('AppIcon') !== -1 || best.url.indexOf('Features') !== -1 || best.url.indexOf('Placeholder') !== -1) return;
-
             // 1. No less than 500x500 size
             // Exclude if BOTH dimensions are smaller than 500 (ignoring '0' which means auto-scale)
             var dimMatch = best.url.match(/(\d+)x(\d+)/i);
