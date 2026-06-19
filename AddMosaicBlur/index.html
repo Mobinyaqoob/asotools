@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REDACT — Hide Sensitive Areas in Images</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #15171c;
+    --panel: #1c1f26;
+    --panel-edge: #2a2e38;
+    --redact-black: #0a0a0a;
+    --paper: #e8e6e0;
+    --paper-dim: #9a9890;
+    --alert: #c4453a;
+    --alert-dim: #7a2c26;
+    --ok: #4a9b6e;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--paper);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+  }
+
+  body{
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  .app{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap: 14px;
+    border-bottom: 1px solid var(--panel-edge);
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+  }
+
+  .stamp{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--paper);
+    border: 3px solid var(--alert);
+    padding: 4px 12px;
+    transform: rotate(-2deg);
+    position: relative;
+  }
+  .stamp::after{
+    content:"";
+    position:absolute;
+    inset:-7px;
+    border: 1px solid var(--alert-dim);
+    pointer-events:none;
+  }
+
+  .tagline{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--paper-dim);
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .file-id{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--paper-dim);
+    text-align:right;
+    line-height: 1.6;
+  }
+  .file-id span{ color: var(--ok); }
+
+  /* ---------- Layout ---------- */
+  .workspace{
+    display:grid;
+    grid-template-columns: 230px 1fr;
+    gap: 22px;
+    align-items:start;
+  }
+  @media (max-width: 820px){
+    .workspace{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    padding: 18px;
+    position: sticky;
+    top: 20px;
+  }
+
+  .group{ margin-bottom: 22px; }
+  .group:last-child{ margin-bottom: 0; }
+
+  .group-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--paper-dim);
+    margin-bottom: 10px;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .group-label::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background: var(--panel-edge);
+  }
+
+  .btn-row{ display:flex; gap: 8px; }
+
+  .tool-btn{
+    flex:1;
+    background: #14161b;
+    border: 1px solid var(--panel-edge);
+    color: var(--paper-dim);
+    padding: 12px 6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 6px;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .tool-btn svg{ width:20px; height:20px; opacity:0.8; }
+  .tool-btn:hover{ border-color: #444b59; color: var(--paper); }
+  .tool-btn.active{
+    border-color: var(--alert);
+    color: var(--paper);
+    background: rgba(196,69,58,0.12);
+  }
+  .tool-btn.active svg{ opacity:1; }
+
+  .strength-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  input[type=range]{
+    flex:1;
+    -webkit-appearance:none;
+    height: 3px;
+    background: var(--panel-edge);
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:14px; height:14px;
+    background: var(--alert);
+    cursor:pointer;
+    border-radius: 1px;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px; height:14px;
+    background: var(--alert);
+    cursor:pointer;
+    border:none;
+    border-radius: 1px;
+  }
+  .strength-val{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    width: 30px;
+    text-align:right;
+    color: var(--paper-dim);
+  }
+
+  .action-btn{
+    width:100%;
+    background: transparent;
+    border: 1px solid var(--panel-edge);
+    color: var(--paper-dim);
+    padding: 10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor:pointer;
+    margin-bottom: 8px;
+    transition: border-color .15s, color .15s;
+  }
+  .action-btn:hover{ border-color: #444b59; color: var(--paper); }
+  .action-btn:last-child{ margin-bottom:0; }
+  .action-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+
+  .action-btn.primary{
+    background: var(--alert);
+    border-color: var(--alert);
+    color: #fff;
+    font-weight:600;
+  }
+  .action-btn.primary:hover{ background: #d8534a; border-color:#d8534a; }
+  .action-btn.primary:disabled{ background: var(--alert); border-color: var(--alert); opacity:0.3; }
+
+  /* ---------- Canvas stage ---------- */
+  .stage{
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    min-height: 480px;
+    position: relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 30px;
+  }
+
+  .corner{
+    position:absolute;
+    width: 22px; height: 22px;
+    border-color: var(--alert);
+    border-style: solid;
+    opacity: 0.7;
+  }
+  .corner.tl{ top:10px; left:10px; border-width: 2px 0 0 2px; }
+  .corner.tr{ top:10px; right:10px; border-width: 2px 2px 0 0; }
+  .corner.bl{ bottom:10px; left:10px; border-width: 0 0 2px 2px; }
+  .corner.br{ bottom:10px; right:10px; border-width: 0 2px 2px 0; }
+
+  .dropzone{
+    text-align:center;
+    color: var(--paper-dim);
+    font-family:'IBM Plex Mono', monospace;
+    cursor:pointer;
+    padding: 60px 40px;
+    border: 2px dashed var(--panel-edge);
+    transition: border-color .15s, color .15s;
+  }
+  .dropzone:hover, .dropzone.dragover{
+    border-color: var(--alert);
+    color: var(--paper);
+  }
+  .dropzone svg{ width:40px; height:40px; margin-bottom: 14px; opacity:0.6; }
+  .dropzone .big{ font-size: 14px; letter-spacing:1px; margin-bottom:6px; }
+  .dropzone .small{ font-size: 11px; opacity:0.6; }
+
+  .canvas-wrap{
+    position: relative;
+    max-width: 100%;
+    line-height:0;
+  }
+  canvas{
+    max-width: 100%;
+    height: auto;
+    display:block;
+    cursor: crosshair;
+    touch-action: none;
+  }
+  #overlay{
+    position:absolute;
+    top:0; left:0;
+    pointer-events:none;
+  }
+
+  .hidden{ display:none !important; }
+
+  footer{
+    margin-top: 18px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--paper-dim);
+    text-align:center;
+    letter-spacing: 0.5px;
+  }
+
+  input[type=file]{ display:none; }
+
+  /* ── Auth ── */
+  .loading-screen {
+    position: fixed;
+    inset: 0;
+    background: rgba(102, 126, 234, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    color: white;
+    font-size: 1.1rem;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .auth-spinner {
+    width: 36px;
+    height: 36px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: auth-spin 1s linear infinite;
+    margin-right: 14px;
+  }
+
+  @keyframes auth-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .auth-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 24px;
+    background: rgba(0,0,0,0.25);
+    font-size: 0.82rem;
+    font-family: 'Inter', sans-serif;
+    color: rgba(255,255,255,0.75);
+  }
+
+  .auth-bar .logout-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    padding: 4px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: background 0.2s;
+  }
+
+  .auth-bar .logout-btn:hover { background: rgba(255,255,255,0.25); }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    padding: 4px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.82rem;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .back-btn:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateX(-3px);
+  }
+</style>
+
+<!-- Firebase Scripts -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loadingScreen" class="loading-screen">
+  <div class="auth-spinner"></div>
+  <div>Checking authentication...</div>
+</div>
+
+<div id="mainContent" style="display:none;">
+
+<div class="app">
+
+  <div class="auth-bar" id="userInfo"><!-- populated by Firebase --></div>
+  <a href="../" class="back-btn">⬅ Back to Tools</a>
+
+  <header>
+    <div class="brand">
+      <div>
+        <div class="stamp">REDACT</div>
+        <div class="tagline">// SELECTIVE OBSCURATION TOOL</div>
+      </div>
+    </div>
+    <div class="file-id" id="fileInfo">NO FILE LOADED <span></span></div>
+  </header>
+
+  <div class="workspace">
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+
+      <div class="group">
+        <div class="group-label">SHAPE</div>
+        <div class="btn-row">
+          <button class="tool-btn active" id="toolRect" title="Rectangle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="1"/></svg>
+            RECT
+          </button>
+          <button class="tool-btn" id="toolCircle" title="Circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+            CIRCLE
+          </button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-label">EFFECT</div>
+        <div class="btn-row">
+          <button class="tool-btn active" id="effectBlur" title="Blur">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="6" cy="7" r="1.4"/><circle cx="18" cy="7" r="1.4"/><circle cx="6" cy="17" r="1.4"/><circle cx="18" cy="17" r="1.4"/></svg>
+            BLUR
+          </button>
+          <button class="tool-btn" id="effectMosaic" title="Mosaic / Pixelate">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            MOSAIC
+          </button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-label">STRENGTH</div>
+        <div class="strength-row">
+          <input type="range" id="strength" min="6" max="50" value="22">
+          <div class="strength-val" id="strengthVal">22</div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-label">ACTIONS</div>
+        <button class="action-btn" id="undoBtn" disabled>↶ UNDO LAST</button>
+        <button class="action-btn" id="resetBtn" disabled>⟲ RESET IMAGE</button>
+        <button class="action-btn" id="newBtn" disabled>⤓ LOAD NEW IMAGE</button>
+        <button class="action-btn primary" id="downloadBtn" disabled>⬇ DOWNLOAD PNG</button>
+      </div>
+
+    </div>
+
+    <!-- STAGE -->
+    <div class="stage">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
+      <div class="dropzone" id="dropzone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+        <div class="big">DROP IMAGE OR CLICK TO UPLOAD</div>
+        <div class="small">JPG · PNG · WEBP — stays in your browser, nothing uploaded anywhere</div>
+      </div>
+
+      <div class="canvas-wrap hidden" id="canvasWrap">
+        <canvas id="base"></canvas>
+        <canvas id="overlay"></canvas>
+      </div>
+
+      <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+  </div>
+
+  <footer>DRAG ON THE IMAGE TO MARK A REGION — THE EFFECT IS BAKED IN IMMEDIATELY. ALL PROCESSING HAPPENS LOCALLY ON YOUR DEVICE.</footer>
+
+</div>
+
+<script>
+(function(){
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const canvasWrap = document.getElementById('canvasWrap');
+  const base = document.getElementById('base');
+  const overlay = document.getElementById('overlay');
+  const bctx = base.getContext('2d');
+  const octx = overlay.getContext('2d');
+  const fileInfo = document.getElementById('fileInfo');
+
+  const toolRect = document.getElementById('toolRect');
+  const toolCircle = document.getElementById('toolCircle');
+  const effectBlur = document.getElementById('effectBlur');
+  const effectMosaic = document.getElementById('effectMosaic');
+  const strength = document.getElementById('strength');
+  const strengthVal = document.getElementById('strengthVal');
+
+  const undoBtn = document.getElementById('undoBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const newBtn = document.getElementById('newBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  let shape = 'rect';
+  let effect = 'blur';
+  let originalImage = null;
+  let history = []; // stack of dataURLs
+  let drawing = false;
+  let startX = 0, startY = 0;
+
+  // ---------- Tool toggles ----------
+  function setActive(group, el){
+    group.forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+  toolRect.addEventListener('click', () => { shape='rect'; setActive([toolRect,toolCircle], toolRect); });
+  toolCircle.addEventListener('click', () => { shape='circle'; setActive([toolRect,toolCircle], toolCircle); });
+  effectBlur.addEventListener('click', () => {
+    effect='blur'; setActive([effectBlur,effectMosaic], effectBlur);
+    strength.min=6; strength.max=50; if(strength.value<6) strength.value=22;
+    strengthVal.textContent = strength.value;
+  });
+  effectMosaic.addEventListener('click', () => {
+    effect='mosaic'; setActive([effectBlur,effectMosaic], effectMosaic);
+    strength.min=4; strength.max=60; if(strength.value<4) strength.value=18;
+    strengthVal.textContent = strength.value;
+  });
+  strength.addEventListener('input', () => strengthVal.textContent = strength.value);
+
+  // ---------- File loading ----------
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files[0]) loadFile(fileInput.files[0]);
+  });
+  newBtn.addEventListener('click', () => fileInput.click());
+
+  function loadFile(file){
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        originalImage = img;
+        base.width = img.naturalWidth;
+        base.height = img.naturalHeight;
+        overlay.width = img.naturalWidth;
+        overlay.height = img.naturalHeight;
+        bctx.drawImage(img, 0, 0);
+        history = [base.toDataURL('image/png')];
+        dropzone.classList.add('hidden');
+        canvasWrap.classList.remove('hidden');
+        fileInfo.innerHTML = (file.name || 'IMAGE').toUpperCase() + ' · ' + img.naturalWidth + '×' + img.naturalHeight + ' <span>● LOADED</span>';
+        updateButtons();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function updateButtons(){
+    undoBtn.disabled = history.length <= 1;
+    resetBtn.disabled = history.length <= 1;
+    newBtn.disabled = false;
+    downloadBtn.disabled = false;
+  }
+
+  // ---------- Coordinate helpers ----------
+  function getPos(e){
+    const rect = base.getBoundingClientRect();
+    const scaleX = base.width / rect.width;
+    const scaleY = base.height / rect.height;
+    const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+    const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+    return {
+      x: Math.min(Math.max((clientX - rect.left) * scaleX, 0), base.width),
+      y: Math.min(Math.max((clientY - rect.top) * scaleY, 0), base.height)
+    };
+  }
+
+  function startDraw(e){
+    if (!originalImage) return;
+    e.preventDefault();
+    const p = getPos(e);
+    startX = p.x; startY = p.y;
+    drawing = true;
+  }
+
+  function moveDraw(e){
+    if (!drawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    octx.clearRect(0, 0, overlay.width, overlay.height);
+    octx.strokeStyle = '#c4453a';
+    octx.lineWidth = Math.max(2, overlay.width / 400);
+    octx.setLineDash([8, 6]);
+    octx.fillStyle = 'rgba(196,69,58,0.12)';
+
+    const x = Math.min(startX, p.x), y = Math.min(startY, p.y);
+    const w = Math.abs(p.x - startX), h = Math.abs(p.y - startY);
+
+    octx.beginPath();
+    if (shape === 'circle') {
+      octx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI*2);
+    } else {
+      octx.rect(x, y, w, h);
+    }
+    octx.fill();
+    octx.stroke();
+  }
+
+  function endDraw(e){
+    if (!drawing) return;
+    drawing = false;
+    const p = getPos(e.changedTouches ? e.changedTouches[0] : e);
+    octx.clearRect(0, 0, overlay.width, overlay.height);
+
+    const x = Math.min(startX, p.x), y = Math.min(startY, p.y);
+    const w = Math.abs(p.x - startX), h = Math.abs(p.y - startY);
+
+    if (w < 4 || h < 4) return; // ignore accidental clicks
+
+    applyEffect(x, y, w, h);
+    history.push(base.toDataURL('image/png'));
+    updateButtons();
+  }
+
+  base.addEventListener('mousedown', startDraw);
+  window.addEventListener('mousemove', moveDraw);
+  window.addEventListener('mouseup', endDraw);
+  base.addEventListener('touchstart', startDraw, {passive:false});
+  window.addEventListener('touchmove', moveDraw, {passive:false});
+  window.addEventListener('touchend', endDraw);
+
+  // ---------- Effect application ----------
+  function applyEffect(x, y, w, h){
+    const amount = parseInt(strength.value, 10);
+    bctx.save();
+    bctx.beginPath();
+    if (shape === 'circle') {
+      bctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI*2);
+    } else {
+      bctx.rect(x, y, w, h);
+    }
+    bctx.clip();
+
+    if (effect === 'blur') {
+      const tmp = document.createElement('canvas');
+      tmp.width = base.width;
+      tmp.height = base.height;
+      const tctx = tmp.getContext('2d');
+      tctx.filter = 'blur(' + amount + 'px)';
+      tctx.drawImage(base, 0, 0);
+      bctx.drawImage(tmp, 0, 0);
+    } else {
+      const pixelSize = amount;
+      const smallW = Math.max(1, Math.round(w / pixelSize));
+      const smallH = Math.max(1, Math.round(h / pixelSize));
+      const small = document.createElement('canvas');
+      small.width = smallW;
+      small.height = smallH;
+      const sctx = small.getContext('2d');
+      sctx.imageSmoothingEnabled = true;
+      sctx.drawImage(base, x, y, w, h, 0, 0, smallW, smallH);
+      bctx.imageSmoothingEnabled = false;
+      bctx.drawImage(small, 0, 0, smallW, smallH, x, y, w, h);
+      bctx.imageSmoothingEnabled = true;
+    }
+    bctx.restore();
+  }
+
+  // ---------- Actions ----------
+  undoBtn.addEventListener('click', () => {
+    if (history.length <= 1) return;
+    history.pop();
+    const img = new Image();
+    img.onload = () => { bctx.clearRect(0,0,base.width,base.height); bctx.drawImage(img,0,0); };
+    img.src = history[history.length - 1];
+    updateButtons();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (!originalImage) return;
+    bctx.clearRect(0, 0, base.width, base.height);
+    bctx.drawImage(originalImage, 0, 0);
+    history = [base.toDataURL('image/png')];
+    updateButtons();
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    base.toBlob((blob) => {
+      if (!blob) {
+        fallbackDownload();
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'redacted-image.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+      // Some embedded/sandboxed viewers silently block the download attribute.
+      // If nothing seems to happen, give the user a guaranteed fallback.
+      setTimeout(fallbackOpenTab, 400);
+    }, 'image/png');
+  });
+
+  function fallbackDownload(){
+    try {
+      const dataUrl = base.toDataURL('image/png');
+      fallbackOpenTab(dataUrl);
+    } catch (err) {
+      alert('Could not export image: ' + err.message);
+    }
+  }
+
+  function fallbackOpenTab(dataUrl){
+    const url = dataUrl || base.toDataURL('image/png');
+    const win = window.open();
+    if (win) {
+      win.document.write(
+        '<title>Redacted image — right-click to save</title>' +
+        '<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;">' +
+        '<img src="' + url + '" style="max-width:100%;height:auto;" alt="Redacted image">' +
+        '</body>'
+      );
+    }
+  }
+
+})();
+</script>
+
+</div> <!-- end mainContent -->
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
+    authDomain: "asotools-auth.firebaseapp.com",
+    projectId: "asotools-auth",
+    storageBucket: "asotools-auth.firebasestorage.app",
+    messagingSenderId: "673087191334",
+    appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
+    measurementId: "G-TC77Q0EMBJ"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  auth.onAuthStateChanged((user) => {
+    const loadingScreen = document.getElementById('loadingScreen');
+    const mainContent   = document.getElementById('mainContent');
+
+    if (user) {
+      loadingScreen.style.display = 'none';
+      mainContent.style.display   = 'block';
+      document.getElementById('userInfo').innerHTML = `
+        <span>Welcome, ${user.email}</span>
+        <button class="logout-btn" onclick="firebase.auth().signOut()">Logout</button>
+      `;
+    } else {
+      mainContent.style.display = 'none';
+      loadingScreen.innerHTML = '<div class="auth-spinner"></div><div>Redirecting to login...</div>';
+      setTimeout(() => {
+        sessionStorage.setItem('redirectAfterLogin', '../AddMosaicBlur/');
+        window.location.href = '../login/';
+      }, 1000);
+    }
+  });
+</script>
+
+</body>
+</html>
