@@ -9,44 +9,24 @@
   <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+    * {
       margin: 0;
-      background: #f2f2f2;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    button {
-      width: 220px;
-      padding: 18px;
-      margin: 12px;
-      font-size: 18px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-      transition: 0.3s;
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #eef0fb;
+      min-height: 100vh;
     }
 
-    button:hover {
-      transform: scale(1.05);
-      background: linear-gradient(135deg, #5a4acb, #7266ff);
-    }
-
-    /* Auth Styles */
+    /* ── Loading screen ── */
     .loading-screen {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       background: rgba(102, 126, 234, 0.95);
       display: flex;
       justify-content: center;
@@ -54,89 +34,225 @@
       z-index: 9999;
       color: white;
       font-size: 1.2rem;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     .auth-spinner {
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid white;
-      border-radius: 50%;
       width: 40px;
       height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin-right: 20px;
-    }
-
-    .auth-info {
-      background: rgba(0, 0, 0, 0.05);
-      padding: 12px 24px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 15px;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-    .user-email {
-      font-size: 1rem;
-      color: #333;
-      font-weight: 500;
-    }
-
-    .logout-btn {
-      background: white;
-      border: 1px solid #ddd;
-      color: #e74c3c;
-      padding: 6px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: all 0.3s ease;
-      width: auto;
-      margin: 0;
-      box-shadow: none;
-    }
-
-    .logout-btn:hover {
-      background: #fdf2f2;
-      border-color: #e74c3c;
-      transform: none;
+      margin-right: 16px;
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 32px;
+      background: transparent;
+      z-index: 100;
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: white;
+      border: 1px solid #d8daf0;
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: 0.88rem;
+      color: #444;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #667eea;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.2s;
+    }
+
+    .logout-btn:hover { color: #4f5bd5; }
+
+    /* ── Main content ── */
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px 40px;
+    }
+
+    .page-title {
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: #1a1d3a;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+      font-size: 1rem;
+      color: #7b7fa8;
+      margin-bottom: 48px;
+    }
+
+    /* ── Tool grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 260px);
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 580px) {
+      .grid { grid-template-columns: 1fr; }
+      .page-title { font-size: 2rem; }
+    }
+
+    /* ── Tool card ── */
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 28px 24px 24px;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border: 1.5px solid #e3e5f5;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.15);
+      border-color: #a5aff0;
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      background: #eef0fb;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #667eea;
+    }
+
+    .card-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .card-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a1d3a;
+      line-height: 1.4;
     }
   </style>
 </head>
 
 <body>
+
   <!-- Loading screen -->
   <div id="loadingScreen" class="loading-screen">
     <div class="auth-spinner"></div>
     <div>Checking authentication...</div>
   </div>
 
-  <div id="mainContent" style="display: none; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <h1 style="font-size:48px; margin-bottom:10px; color:#333; text-shadow:2px 2px 5px rgba(0,0,0,0.1); font-weight: 700;">ASO Tools</h1>
-    <p style="color: #666; margin-bottom: 30px; font-size: 1.1rem;">Professional App Store Optimization Suite</p>
+  <!-- Main content -->
+  <div id="mainContent" style="display:none;">
 
-    <div id="userInfo"></div>
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="user-pill" id="userInfo"><!-- populated by JS --></div>
+    </div>
 
-    <div style="display: flex; flex-direction: column; align-items: center;">
-      <button onclick="window.location.href='./DuplicateLineRemover/'">Duplicate Line Remover</button>
-      <button onclick="window.location.href='./image-optimize/'">Image Optimize</button>
-      <button onclick="window.location.href='./keyword-density-checker/'">Keyword Density Checker</button>
-      <button onclick="window.location.href='./title_combination/'">Title Combination</button>
-      <button onclick="window.location.href='./AppstoreScreenshotExtract/'">Appstore Screenshot Extractor</button>
-      <button onclick="window.location.href='./ImageCombiner/ImageComposer.html'">Image Combiner</button>
+    <!-- Page body -->
+    <div class="page">
+      <h1 class="page-title">ASO Tools</h1>
+      <p class="page-subtitle">Professional App Store Optimization Suite</p>
+
+      <div class="grid">
+
+        <!-- Duplicate Line Remover -->
+        <a class="card" href="./DuplicateLineRemover/">
+          <div class="card-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10"/></svg>
+          </div>
+          <div class="card-name">Duplicate Line Remover</div>
+        </a>
+
+        <!-- Image Optimize -->
+        <a class="card" href="./image-optimize/">
+          <div class="card-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 15l5-5 4 4 3-3 4 4"/></svg>
+          </div>
+          <div class="card-name">Image Optimize</div>
+        </a>
+
+        <!-- Keyword Density Checker -->
+        <a class="card" href="./keyword-density-checker/">
+          <div class="card-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 18V6m4 12V6m4 12v-6m4 6V6m4 12v-4"/></svg>
+          </div>
+          <div class="card-name">Keyword Density Checker</div>
+        </a>
+
+        <!-- Title Combination -->
+        <a class="card" href="./title_combination/">
+          <div class="card-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h10M4 17h6"/></svg>
+          </div>
+          <div class="card-name">Title Combination</div>
+        </a>
+
+        <!-- Appstore Screenshot Extractor -->
+        <a class="card" href="./AppstoreScreenshotExtract/">
+          <div class="card-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01"/></svg>
+          </div>
+          <div class="card-name">Appstore Screenshot Extractor</div>
+        </a>
+
+        <!-- Image Combiner -->
+        <a class="card" href="./ImageCombiner/ImageComposer.html">
+          <div class="card-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3h6v6H5zM13 3h6v6h-6zM5 13h6v6H5zM13 13h6v6h-6z"/></svg>
+          </div>
+          <div class="card-name">Image Combiner</div>
+        </a>
+
+      </div>
     </div>
   </div>
 
   <script>
-    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
       authDomain: "asotools-auth.firebaseapp.com",
@@ -147,44 +263,30 @@
       measurementId: "G-TC77Q0EMBJ"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // Authentication state observer
     auth.onAuthStateChanged((user) => {
       const loadingScreen = document.getElementById('loadingScreen');
-      const mainContent = document.getElementById('mainContent');
+      const mainContent   = document.getElementById('mainContent');
 
       if (user) {
-        // User is signed in
         loadingScreen.style.display = 'none';
-        mainContent.style.display = 'flex';
-        updateUserInfo(user);
+        mainContent.style.display   = 'block';
+        document.getElementById('userInfo').innerHTML = `
+          <span>${user.email}</span>
+          <span style="color:#d8daf0">|</span>
+          <button class="logout-btn" onclick="logout()">Logout</button>
+        `;
       } else {
-        // Not authenticated
         window.location.href = './login/';
       }
     });
 
-    function updateUserInfo(user) {
-      const userInfo = document.getElementById('userInfo');
-      if (userInfo) {
-        userInfo.innerHTML = `
-          <div class="auth-info">
-            <span class="user-email">Logged in as: <strong>${user.email}</strong></span>
-            <button class="logout-btn" onclick="logout()">Logout</button>
-          </div>
-        `;
-      }
-    }
-
     function logout() {
-      auth.signOut().then(() => {
-        window.location.href = './login/';
-      });
+      auth.signOut().then(() => window.location.href = './login/');
     }
   </script>
-</body>
 
+</body>
 </html>
