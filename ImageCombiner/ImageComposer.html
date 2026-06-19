@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Image Composer</title>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .instructions {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px) scale(0.97);
+            filter: brightness(0.88);
+            transition: all 0.08s;
+        }
+
+        .zoom-btn:active {
+            transform: scale(0.88);
+            background: #ddd;
+            transition: all 0.08s;
+        }
+
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056CC;
+        }
+
+        .btn-secondary {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #D32F2F;
+        }
+
+        .btn-success {
+            background: #34C759;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2AAE4A;
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .toggle-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .cell {
+            position: relative;
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            aspect-ratio: 4 / 3;
+            transition: box-shadow 0.2s;
+            box-shadow: inset 0 0 0 3px #222;
+        }
+
+        .cell:hover {
+            box-shadow: inset 0 0 0 3px #007AFF;
+        }
+
+        .cell.active {
+            box-shadow: inset 0 0 0 3px #007AFF, 0 0 0 3px rgba(0,122,255,0.3);
+        }
+
+        .cell-number {
+            position: absolute;
+            bottom: 8px;
+            right: 10px;
+            font-size: 24px;
+            font-weight: 500;
+            color: #222;
+            z-index: 10;
+            pointer-events: none;
+            user-select: none;
+            transition: opacity 0.2s;
+        }
+
+        .cell.has-image .cell-number {
+            color: #000;
+            text-shadow: 0 1px 3px rgba(255,255,255,0.6);
+        }
+
+        /* When numbers are hidden, only hide them on cells that have images */
+        .hide-numbers .cell.has-image .cell-number {
+            opacity: 0;
+        }
+
+        /* Border preview when toggle is on */
+        .show-border .cell.has-image {
+            box-shadow: inset 0 0 0 3px #222, 0 0 0 3px #000;
+            outline: 3px solid #000;
+        }
+
+        .cell-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .cell img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: none;
+            max-height: none;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .cell img:active {
+            cursor: grabbing;
+        }
+
+        .upload-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            background: rgba(0,0,0,0.3);
+            z-index: 20;
+        }
+
+        .cell:hover .upload-overlay {
+            opacity: 1;
+        }
+
+        .upload-btn {
+            background: rgba(255,255,255,0.95);
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            pointer-events: none;
+        }
+
+        .cell.has-image .upload-overlay {
+            display: none;
+        }
+
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ccc;
+            font-size: 40px;
+            pointer-events: none;
+        }
+
+        .cell.has-image .empty-state {
+            display: none;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 6px;
+            z-index: 30;
+            background: rgba(0,0,0,0.7);
+            padding: 6px;
+            border-radius: 20px;
+        }
+
+        .cell.active .zoom-controls {
+            display: flex;
+        }
+
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            color: #333;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .zoom-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,59,48,0.9);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            padding: 0;
+        }
+
+        .cell.active .delete-btn,
+        .cell:hover .delete-btn {
+            display: flex;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .scale-hint {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            display: none;
+            z-index: 25;
+        }
+
+        .cell.active .scale-hint {
+            display: block;
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .auth-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: auth-spin 1s linear infinite;
+            margin-right: 20px;
+        }
+
+        @keyframes auth-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .auth-bar {
+            background: rgba(102, 126, 234, 0.15);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+            font-size: 0.9rem;
+        }
+
+        .user-email {
+            color: #555;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: opacity 0.3s;
+        }
+
+        .logout-btn:hover {
+            opacity: 0.85;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <!-- Loading screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="auth-spinner"></div>
+        <div>Checking authentication...</div>
+    </div>
+
+    <div id="mainContent" style="display: none;">
+    <div class="auth-bar" id="userInfo"><!-- User info populated by Firebase --></div>
+    <h1>Grid Image Composer</h1>
+    <p class="instructions">
+        Click any cell to upload an image. Drag to move, use +/- to zoom. 
+        Center button (⌂) resets to a perfect cover-fit, filling the cell edge to edge.
+    </p>
+
+    <div class="controls">
+        <button class="btn-primary" onclick="document.getElementById('batchInput').click()">
+            📁 Upload Multiple
+        </button>
+        <button class="btn-secondary" onclick="clearAll()">
+            🗑 Clear All
+        </button>
+        <div class="toggle-group">
+            <label for="gapSize">Gap between images:</label>
+            <input type="number" id="gapSize" value="8" min="0" max="100"
+                style="width:60px; padding:4px 8px; border:1px solid #ddd; border-radius:6px; font-size:13px; text-align:center;">
+            <span style="font-size:12px;color:#999">px</span>
+        </div>
+        <div class="toggle-group">
+            <input type="checkbox" id="showNumbers" checked onchange="toggleNumbers(this.checked)">
+            <label for="showNumbers">Show cell numbers</label>
+        </div>
+        <div class="toggle-group">
+            <input type="checkbox" id="showBorder" onchange="toggleBorder(this.checked)">
+            <label for="showBorder">Cell border</label>
+        </div>
+        <button class="btn-success" onclick="downloadCombined()">
+            ⬇ Download Combined
+        </button>
+    </div>
+
+    <input type="file" id="batchInput" multiple accept="image/*" onchange="handleBatchUpload(event)">
+
+    <div class="grid-container" id="grid">
+        <!-- Cells generated by JS -->
+    </div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const cells = [];
+        let activeCell = null;
+        let cellIdCounter = 0;
+
+        // Output resolution per cell (must match cell aspect-ratio 4/3)
+        const OUT_CELL_W = 600;
+        const OUT_CELL_H = 450;
+        const CELL_RATIO = 4 / 3;
+
+        // Initialize grid
+        for (let i = 1; i <= 12; i++) {
+            createCell(i);
+        }
+
+        function createCell(number) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.number = number;
+            cell.dataset.cellId = cellIdCounter++;
+
+            cell.innerHTML = `
+                <div class="cell-content"></div>
+                <span class="cell-number">${number}</span>
+                <span class="empty-state">+</span>
+                <div class="upload-overlay">
+                    <span class="upload-btn">Click to upload</span>
+                </div>
+                <div class="zoom-controls">
+                    <button class="zoom-btn" onclick="event.stopPropagation(); zoomImage(${cell.dataset.cellId}, 0.9)">−</button>
+                    <button class="zoom-btn" onclick="event.stopPropagation(); resetZoom(${cell.dataset.cellId})">⌂</button>
+                    <button class="zoom-btn" onclick="event.stopPropagation(); zoomImage(${cell.dataset.cellId}, 1.1)">+</button>
+                </div>
+                <button class="delete-btn" onclick="event.stopPropagation(); deleteImage(${cell.dataset.cellId})">×</button>
+                <span class="scale-hint">Drag to move · +/- to zoom</span>
+            `;
+
+            cell.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON' || e.target.classList.contains('zoom-controls')) return;
+
+                if (!cell.classList.contains('has-image')) {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => handleFileSelect(e, cell.dataset.cellId);
+                    input.click();
+                } else {
+                    setActiveCell(cell.dataset.cellId);
+                }
+            });
+
+            grid.appendChild(cell);
+            cells.push({
+                id: cell.dataset.cellId,
+                element: cell,
+                image: null,
+                // Scale factor applied on top of natural size to achieve contain-fit
+                fitScale: 1,
+                // Additional user zoom
+                userZoom: 1,
+                // Normalized offset from center
+                nx: 0,
+                ny: 0,
+                isDragging: false,
+                dragStartX: 0,
+                dragStartY: 0,
+                dragStartNX: 0,
+                dragStartNY: 0
+            });
+        }
+
+        function toggleNumbers(show) {
+            if (show) {
+                grid.classList.remove('hide-numbers');
+            } else {
+                grid.classList.add('hide-numbers');
+            }
+        }
+
+        function toggleBorder(show) {
+            if (show) {
+                grid.classList.add('show-border');
+            } else {
+                grid.classList.remove('show-border');
+            }
+        }
+
+        function setActiveCell(id) {
+            cells.forEach(c => c.element.classList.remove('active'));
+            const cell = cells.find(c => c.id == id);
+            if (cell) {
+                cell.element.classList.add('active');
+                activeCell = id;
+            }
+        }
+
+        function handleFileSelect(event, cellId) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                loadImageIntoCell(cellId, e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function computeCoverScale(imgW, imgH, cellW, cellH) {
+            return Math.max(cellW / imgW, cellH / imgH);
+        }
+
+        function computeContainScale(imgW, imgH, cellW, cellH) {
+            return Math.min(cellW / imgW, cellH / imgH);
+        }
+
+        function loadImageIntoCell(cellId, src) {
+            const cell = cells.find(c => c.id == cellId);
+            if (!cell) return;
+
+            const img = new Image();
+            img.onload = () => {
+                cell.image = img;
+                cell.nx = 0;  // pan offset in canvas-space pixels (OUT_CELL coords)
+                cell.ny = 0;
+                cell.userZoom = 1;
+
+                // fitScale is always computed in OUTPUT space (OUT_CELL_W x OUT_CELL_H)
+                // This is the single source of truth — CSS and canvas both derive from this
+                cell.fitScale = computeCoverScale(img.naturalWidth, img.naturalHeight, OUT_CELL_W, OUT_CELL_H);
+
+                const content = cell.element.querySelector('.cell-content');
+                content.innerHTML = '';
+
+                img.style.width = img.naturalWidth + 'px';
+                img.style.height = img.naturalHeight + 'px';
+                img.style.transformOrigin = 'center center';
+
+                content.appendChild(img);
+                cell.element.classList.add('has-image');
+
+                setupDrag(cell);
+                updateImageTransform(cell);
+            };
+            img.src = src;
+        }
+
+        function setupDrag(cell) {
+            const img = cell.element.querySelector('img');
+            if (!img) return;
+
+            img.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                cell.isDragging = true;
+                cell.dragStartX = e.clientX;
+                cell.dragStartY = e.clientY;
+                cell.dragStartNX = cell.nx;
+                cell.dragStartNY = cell.ny;
+                img.style.cursor = 'grabbing';
+                setActiveCell(cell.id);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!cell.isDragging) return;
+
+                const cellRect = cell.element.getBoundingClientRect();
+                const dx = e.clientX - cell.dragStartX;
+                const dy = e.clientY - cell.dragStartY;
+
+                // Convert DOM pixel drag → output-space pixels
+                // DOM pixel / (cellRect.width / OUT_CELL_W) = output pixel
+                const domToOut = OUT_CELL_W / cellRect.width;
+                cell.nx = cell.dragStartNX + dx * domToOut;
+                cell.ny = cell.dragStartNY + dy * domToOut;
+
+                updateImageTransform(cell);
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (cell.isDragging) {
+                    cell.isDragging = false;
+                    img.style.cursor = 'grab';
+                }
+            });
+        }
+
+        function updateImageTransform(cell) {
+            if (!cell.image) return;
+            const img = cell.element.querySelector('img');
+            if (!img) return;
+
+            const cellRect = cell.element.getBoundingClientRect();
+            // Convert output-space scale to DOM-space scale
+            const outToDom = cellRect.width / OUT_CELL_W;
+            const totalScaleOut = cell.fitScale * cell.userZoom;   // in output space
+            const totalScaleDom = totalScaleOut * outToDom;         // in DOM space
+
+            // nx/ny are in output-space pixels → convert to DOM pixels for CSS
+            const offsetXDom = cell.nx * outToDom;
+            const offsetYDom = cell.ny * outToDom;
+
+            img.style.transform = `translate(calc(-50% + ${offsetXDom}px), calc(-50% + ${offsetYDom}px)) scale(${totalScaleDom})`;
+        }
+
+        function zoomImage(cellId, factor) {
+            const cell = cells.find(c => c.id == cellId);
+            if (!cell || !cell.image) return;
+
+            cell.userZoom *= factor;
+            // Clamp total output-space scale between reasonable bounds
+            const totalOut = cell.fitScale * cell.userZoom;
+            const clamped = Math.max(0.1, Math.min(10, totalOut));
+            cell.userZoom = clamped / cell.fitScale;
+
+            updateImageTransform(cell);
+        }
+
+        function resetZoom(cellId) {
+            const cell = cells.find(c => c.id == cellId);
+            if (!cell || !cell.image) return;
+
+            // Contain fit in output space: full image visible, centered
+            cell.fitScale = computeContainScale(cell.image.naturalWidth, cell.image.naturalHeight, OUT_CELL_W, OUT_CELL_H);
+            cell.userZoom = 1;
+            cell.nx = 0;
+            cell.ny = 0;
+            updateImageTransform(cell);
+        }
+
+        function deleteImage(cellId) {
+            const cell = cells.find(c => c.id == cellId);
+            if (!cell) return;
+
+            cell.image = null;
+            cell.fitScale = 1;
+            cell.userZoom = 1;
+            cell.nx = 0;
+            cell.ny = 0;
+            cell.element.querySelector('.cell-content').innerHTML = '';
+            cell.element.classList.remove('has-image', 'active');
+
+            if (activeCell == cellId) activeCell = null;
+        }
+
+        function handleBatchUpload(event) {
+            const files = Array.from(event.target.files);
+            let cellIndex = 0;
+
+            files.forEach((file) => {
+                while (cellIndex < cells.length && cells[cellIndex].image) {
+                    cellIndex++;
+                }
+                if (cellIndex >= cells.length) return;
+
+                // Capture the correct cell id before the async FileReader callback
+                const targetCellId = cells[cellIndex].id;
+                cellIndex++;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    loadImageIntoCell(targetCellId, e.target.result);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Reset input so the same files can be selected again
+            event.target.value = '';
+        }
+
+        function clearAll() {
+            cells.forEach(cell => {
+                cell.image = null;
+                cell.fitScale = 1;
+                cell.userZoom = 1;
+                cell.nx = 0;
+                cell.ny = 0;
+                cell.element.querySelector('.cell-content').innerHTML = '';
+                cell.element.classList.remove('has-image', 'active');
+            });
+            activeCell = null;
+        }
+
+        function downloadCombined() {
+            const gap        = Math.max(0, parseInt(document.getElementById('gapSize').value) || 0);
+            const showNums   = document.getElementById('showNumbers').checked;
+            const showBorder = document.getElementById('showBorder').checked;
+
+            // Collect only filled cells
+            const filled = cells.filter(c => c.image);
+            if (filled.length === 0) return;
+
+            // Determine optimal grid layout
+            const count = filled.length;
+            let cols, rows;
+            if      (count === 1)  { cols = 1; rows = 1; }
+            else if (count === 2)  { cols = 2; rows = 1; }
+            else if (count === 3)  { cols = 3; rows = 1; }
+            else if (count === 4)  { cols = 2; rows = 2; }
+            else if (count <= 6)   { cols = 3; rows = 2; }
+            else if (count <= 8)   { cols = 4; rows = 2; }
+            else if (count <= 9)   { cols = 3; rows = 3; }
+            else if (count <= 12)  { cols = 4; rows = 3; }
+            else                   { cols = 4; rows = Math.ceil(count / 4); }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width  = cols * OUT_CELL_W + (cols - 1) * gap;
+            canvas.height = rows * OUT_CELL_H + (rows - 1) * gap;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            filled.forEach((cell, index) => {
+                const row = Math.floor(index / cols);
+                const col = index % cols;
+
+                // If this is the last row and it's not full, center the remaining cells
+                const itemsInThisRow = Math.min(cols, count - row * cols);
+                const rowOffsetX = Math.round((cols - itemsInThisRow) * (OUT_CELL_W + gap) / 2);
+
+                const x = rowOffsetX + col % cols * (OUT_CELL_W + gap);
+                const y = row * (OUT_CELL_H + gap);
+
+                // Draw image
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(x, y, OUT_CELL_W, OUT_CELL_H);
+                ctx.clip();
+
+                const img = cell.image;
+                const totalScale = cell.fitScale * cell.userZoom;
+                const drawWidth  = img.naturalWidth  * totalScale;
+                const drawHeight = img.naturalHeight * totalScale;
+
+                const drawX = x + OUT_CELL_W / 2 + cell.nx - drawWidth  / 2;
+                const drawY = y + OUT_CELL_H / 2 + cell.ny - drawHeight / 2;
+
+                ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                ctx.restore();
+
+                // Draw black border around cell if toggle is on
+                if (showBorder) {
+                    const bw = 3; // border width in output px
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = bw * 2; // strokeRect draws centered on edge, so double to get inset look
+                    ctx.strokeRect(x, y, OUT_CELL_W, OUT_CELL_H);
+                }
+
+                // Draw cell number overlay if toggle is on
+                if (showNums) {
+                    const numSize = Math.round(OUT_CELL_H * 0.075); // ~56px at 450h
+                    ctx.font = `500 ${numSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'bottom';
+
+                    const numX = x + OUT_CELL_W - 16;
+                    const numY = y + OUT_CELL_H - 12;
+                    const label = String(cell.element.dataset.number);
+
+                    // Shadow for readability
+                    ctx.shadowColor = 'rgba(255,255,255,0.6)';
+                    ctx.shadowBlur = 6;
+                    ctx.fillStyle = '#000000';
+                    ctx.fillText(label, numX, numY);
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            const link = document.createElement('a');
+            link.download = 'grid-composition.png';
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        // Live grid gap preview
+        document.getElementById('gapSize').addEventListener('input', function() {
+            const val = Math.max(0, parseInt(this.value) || 0);
+            grid.style.gap = val + 'px';
+            refreshArrows();
+        });
+
+        // Apply initial gap value on load
+        grid.style.gap = document.getElementById('gapSize').value + 'px';
+        window.addEventListener('resize', () => {
+            cells.forEach(cell => {
+                if (cell.image) updateImageTransform(cell);
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (!activeCell) return;
+
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                deleteImage(activeCell);
+            } else if (e.key === '+' || e.key === '=') {
+                zoomImage(activeCell, 1.1);
+            } else if (e.key === '-' || e.key === '_') {
+                zoomImage(activeCell, 0.9);
+            } else if (e.key === '0') {
+                resetZoom(activeCell);
+            }
+        });
+
+        // Click outside to deselect
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.cell')) {
+                cells.forEach(c => c.element.classList.remove('active'));
+                activeCell = null;
+            }
+        });
+    </script>
+
+    </div> <!-- End of mainContent -->
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC_jnqV-wZDJcUqu6ttzqDY8NSfWqO3sMw",
+            authDomain: "asotools-auth.firebaseapp.com",
+            projectId: "asotools-auth",
+            storageBucket: "asotools-auth.firebasestorage.app",
+            messagingSenderId: "673087191334",
+            appId: "1:673087191334:web:10ee1f2a92ef0349a4e9e7",
+            measurementId: "G-TC77Q0EMBJ"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        auth.onAuthStateChanged((user) => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContent = document.getElementById('mainContent');
+
+            if (user) {
+                loadingScreen.style.display = 'none';
+                mainContent.style.display = 'block';
+
+                const userInfo = document.getElementById('userInfo');
+                userInfo.innerHTML = `
+                    <span class="user-email">Welcome, ${user.email}</span>
+                    <button class="logout-btn" onclick="firebase.auth().signOut()">Logout</button>
+                `;
+            } else {
+                mainContent.style.display = 'none';
+                loadingScreen.innerHTML = `
+                    <div class="auth-spinner"></div>
+                    <div>Redirecting to login...</div>
+                `;
+                setTimeout(() => {
+                    sessionStorage.setItem('redirectAfterLogin', '../ImageCombiner/ImageComposer.html');
+                    window.location.href = "../login/";
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
