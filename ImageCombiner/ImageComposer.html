@@ -386,6 +386,27 @@
         .logout-btn:hover {
             opacity: 0.85;
         }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            opacity: 0.85;
+            transform: translateX(-3px);
+        }
     </style>
 <base target="_blank">
 </head>
@@ -398,6 +419,7 @@
 
     <div id="mainContent" style="display: none;">
     <div class="auth-bar" id="userInfo"><!-- User info populated by Firebase --></div>
+    <a href="../" class="back-btn">⬅ Back to Tools</a>
     <h1>Grid Image Composer</h1>
     <p class="instructions">
         Click any cell to upload an image. Drag to move, use +/- to zoom. 
